@@ -1,4 +1,4 @@
-package com.example.persistencia_poliglota;
+package com.example.poliglota;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
