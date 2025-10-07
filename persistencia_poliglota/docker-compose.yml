@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-poliglota
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: poliglota_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  cassandra:
+    image: cassandra:4.1
+    container_name: cassandra-poliglota
+    restart: always
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=PoliglotaCluster
+      - CASSANDRA_AUTHENTICATOR=PasswordAuthenticator
+      - CASSANDRA_PASSWORD=root
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+
+  neo4j:
+    image: neo4j:5.13
+    container_name: neo4j-poliglota
+    restart: always
+    ports:
+      - "7474:7474" # Web UI
+      - "7687:7687" # Bolt port
+    environment:
+      - NEO4J_AUTH=neo4j/neo4j123
+    volumes:
+      - neo4j_data:/data
+
+volumes:
+  mysql_data:
+  cassandra_data:
+  neo4j_data:
