@@ -1,13 +1,6 @@
-server:
-  port: 8080
-
 spring:
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.data.cassandra.CassandraReactiveDataAutoConfiguration
-
   datasource:
-    url: jdbc:mysql://localhost:3306/poliglota?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/poliglota_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -15,20 +8,23 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
-    open-in-view: false
+        format_sql: true
+
+  cassandra:
+    contact-points: localhost
+    port: 9042
+    keyspace-name: sensores
+    local-datacenter: datacenter1
+    schema-action: create_if_not_exists
 
   neo4j:
     uri: bolt://localhost:7687
     authentication:
       username: neo4j
-      password: neo4j
+      password: test1234
 
-  cassandra:
-    contact-points: 127.0.0.1
-    port: 9042
-    local-datacenter: datacenter1
-    keyspace-name: poliglota
-    schema-action: create-if-not-exists
+server:
+  port: 8080

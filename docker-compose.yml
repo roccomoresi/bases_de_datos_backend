@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_poliglota
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: poliglota
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - poliglota_net
+
+  cassandra:
+    image: cassandra:4.1
+    container_name: cassandra_poliglota
+    restart: always
+    environment:
+      CASSANDRA_CLUSTER_NAME: "Test Cluster"
+      CASSANDRA_DC: "datacenter1"
+      CASSANDRA_ENDPOINT_SNITCH: "SimpleSnitch"
+    ports:
+      - "9042:9042"
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    networks:
+      - poliglota_net
+
+  neo4j:
+    image: neo4j:5.22
+    container_name: neo4j_poliglota
+    restart: always
+    environment:
+      NEO4J_AUTH: neo4j/test123
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+    networks:
+      - poliglota_net
+
+volumes:
+  mysql_data:
+  cassandra_data:
+  neo4j_data:
+
+networks:
+  poliglota_net:
+    driver: bridge
