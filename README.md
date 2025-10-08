@@ -1,155 +1,271 @@
-🧠 Proyecto: Persistencia Políglota
+Excelente 🔥
+te voy a dejar un **README completísimo y listo para tu grupo**, pensado para que cualquiera lo levante **sin tener que entender todo el backend**.
 
-Este proyecto es un backend hecho en Spring Boot 3.5.6 con conexión a tres bases de datos diferentes:
+---
 
-🐬 MySQL → Base de datos relacional
+# 🧠 Proyecto: Persistencia Políglota
 
-☸️ Cassandra → Base de datos NoSQL tipo columna
+**Integración de MySQL + Neo4j + Cassandra**
+📚 Trabajo Práctico de Bases de Datos NoSQL
 
-🕸 Neo4j → Base de datos de grafos
+---
 
-🚀 Objetivo del proyecto
+## 🚀 Objetivo del TP
 
-Demostrar cómo una misma aplicación puede interactuar con múltiples motores de base de datos a la vez (poliglotismo de persistencia).
+Este proyecto demuestra una **arquitectura de persistencia poliglota**, integrando tres bases de datos con un backend unificado en **Spring Boot**.
+Cada motor se utiliza según su **fortaleza específica**:
 
-🧩 Tecnologías utilizadas
-Tipo	Tecnología	Versión
-Lenguaje	Java	17
-Framework	Spring Boot	3.5.6
-ORM Relacional	Hibernate (JPA)	Integrado
-BD Relacional	MySQL	8.0
-BD NoSQL	Cassandra	4.1
-BD Grafos	Neo4j	5.22
-Contenedores	Docker + Docker Compose	Última estable
-⚙️ Requisitos previos
+| Base de Datos    | Tipo       | Uso en el sistema                                        | Justificación                                                       |
+| ---------------- | ---------- | -------------------------------------------------------- | ------------------------------------------------------------------- |
+| 🟦 **MySQL**     | Relacional | Manejo de **usuarios y transacciones**                   | Garantiza **consistencia** y soporte para **transacciones ACID**    |
+| 🟩 **Neo4j**     | Grafos     | Gestión de **relaciones entre usuarios (colaboradores)** | Ideal para representar **redes, conexiones y relaciones complejas** |
+| 🟪 **Cassandra** | Columnar   | Registro de **sensores o lecturas de IoT**               | Optimizada para **alta disponibilidad y escalabilidad horizontal**  |
 
-Antes de empezar, asegurate de tener instalado:
+---
 
- Docker Desktop
-📥 Descargar aquí
+## 🧱 Estructura general
 
- Java 17 o superior
-📥 Descargar aquí
+```
+persistencia_poliglota/
+│
+├── src/main/java/com/example/persistencia/poliglota/
+│   ├── controller/
+│   │   ├── sql/TransaccionController.java
+│   │   ├── neo4j/UsuarioController.java
+│   │   └── cassandra/SensorController.java
+│   ├── service/
+│   │   ├── sql/TransaccionService.java
+│   │   ├── neo4j/UsuarioService.java
+│   │   └── cassandra/SensorService.java
+│   ├── model/
+│   │   ├── sql/UsuarioSQL.java
+│   │   ├── neo4j/UsuarioNeo.java
+│   │   └── cassandra/Sensor.java
+│   └── repository/
+│       ├── sql/UsuarioRepository.java
+│       ├── neo4j/UsuarioRepository.java
+│       └── cassandra/SensorRepository.java
+│
+├── docker-compose.yml
+└── README.md  👈 (este archivo)
+```
 
- Git
-📥 Descargar aquí
+---
 
- VS Code o IntelliJ IDEA (opcional)
+## 🐳 1️⃣ Levantar las bases de datos con Docker
 
-💡 En Windows, abrí PowerShell (no CMD) para ejecutar los comandos.
+Abrí una terminal en la raíz del proyecto y ejecutá:
 
-🧱 Paso 1 — Clonar el repositorio
-git clone https://github.com/roccomoresi/bases_de_datos_backend.git
-cd bases_de_datos_backend
+```bash
+docker-compose up -d
+```
 
-🐳 Paso 2 — Levantar las bases de datos con Docker
+📦 Esto inicia los contenedores:
 
-Ejecutá el siguiente comando para levantar MySQL, Cassandra y Neo4j:
+| Contenedor            | Imagen        | Puerto      |
+| --------------------- | ------------- | ----------- |
+| `mysql_poliglota`     | mysql:8.0     | 3306        |
+| `neo4j_poliglota`     | neo4j:5.22    | 7474 / 7687 |
+| `cassandra_poliglota` | cassandra:4.1 | 9042        |
 
-docker compose up -d
+Podés verificar que estén corriendo con:
 
-
-Esto:
-
-Creará los contenedores con sus volúmenes persistentes.
-
-Expondrá los puertos:
-
-MySQL → 3306
-
-Cassandra → 9042
-
-Neo4j → 7474 (interfaz web) y 7687 (Bolt)
-
-Podés verificar que están corriendo con:
-
+```bash
 docker ps
+```
 
+---
 
-Deberías ver algo así:
+## 🧩 2️⃣ Configurar conexiones en `application.properties`
 
-CONTAINER ID   IMAGE           PORTS
-xxxxxx          mysql:8.0       0.0.0.0:3306->3306/tcp
-xxxxxx          cassandra:4.1   0.0.0.0:9042->9042/tcp
-xxxxxx          neo4j:5.22      7474/tcp, 7687/tcp
+```properties
+# 🟦 MySQL
+spring.datasource.url=jdbc:mysql://localhost:3306/poliglota
+spring.datasource.username=root
+spring.datasource.password=root
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
 
-🧰 Paso 3 — Crear las bases y keyspaces necesarios
-🐬 En MySQL
+# 🟩 Neo4j
+spring.neo4j.uri=bolt://localhost:7687
+spring.neo4j.authentication.username=neo4j
+spring.neo4j.authentication.password=1234
 
-Entrá al contenedor de MySQL:
+# 🟪 Cassandra
+spring.cassandra.contact-points=localhost
+spring.cassandra.keyspace-name=sensores
+spring.cassandra.port=9042
+spring.cassandra.local-datacenter=datacenter1
+spring.cassandra.schema-action=create_if_not_exists
+```
 
-docker exec -it mysql_poliglota mysql -u root -p
+---
 
+## 💻 3️⃣ Ejecutar el backend
 
-(la contraseña es root123)
+En la carpeta raíz del proyecto:
 
-Dentro del cliente MySQL, ejecutá:
-
-CREATE DATABASE poliglota_db;
-EXIT;
-
-☸️ En Cassandra
-
-Entrá al contenedor de Cassandra:
-
-docker exec -it cassandra_poliglota cqlsh
-
-
-Dentro del shell de Cassandra:
-
-CREATE KEYSPACE sensores
-WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
-EXIT;
-
-🕸 En Neo4j
-
-Abrí el panel en el navegador:
-👉 http://localhost:7474
-
-Usuario: neo4j
-Contraseña: neo4jpoliglota (la primera vez te pedirá cambiarla)
-
-⚙️ Paso 4 — Ejecutar el backend
-
-Para correr el servidor de Spring Boot:
-
+```bash
 ./mvnw spring-boot:run
+```
 
+El servidor se inicia en:
+👉 `http://localhost:8080`
 
-(En Windows, si te pide permiso, poné “Ejecutar de todos modos”).
+---
 
-Si ves algo como esto, ¡todo salió bien! 🎉
+## 📬 4️⃣ Endpoints principales
 
-Tomcat started on port 8080 (http)
-Started PersistenciaPoliglotaApplication in X.XXX seconds
+### 🟦 MySQL – Transacciones y Usuarios
 
-🧪 Paso 5 — Probar que todo funcione
+**Crear usuario**
 
-Abrí en tu navegador:
-👉 http://localhost:8080/status
+```
+POST /api/sql/usuarios
+```
 
-Deberías ver:
+Body:
 
+```json
 {
-  "status": "✅ Aplicación corriendo correctamente",
-  "mysql": "OK",
-  "cassandra": "OK",
-  "neo4j": "OK"
+  "nombre": "Rocco",
+  "email": "rocco@mail.com"
 }
+```
 
+**Ver usuarios**
 
-Si ves eso → ¡todo está funcionando! 🚀
+```
+GET /api/sql/usuarios
+```
 
-Tips extra
+**Ejemplo de respuesta de error (email duplicado):**
 
-Si el backend no levanta, revisá que los 3 contenedores estén "Up".
+```json
+{
+  "error": "Petición inválida",
+  "detalle": "El email 'rocco@mail.com' ya está registrado."
+}
+```
 
-Si Cassandra o MySQL tiran error de conexión, borrá los volúmenes y recreá todo:
+---
 
-docker compose down -v
-docker compose up -d
+### 🟩 Neo4j – Relaciones entre usuarios
 
+**Crear usuario con relaciones**
 
-Si mvnw no se ejecuta en PowerShell, usá:
+```
+POST /api/neo4j/usuarios
+```
 
-mvnw.cmd spring-boot:run
+Body:
+
+```json
+{
+  "nombre": "Rocco",
+  "colaboraCon": ["Lucio", "Camila"]
+}
+```
+
+**Ver todos los usuarios (y sus relaciones)**
+
+```
+GET /api/neo4j/usuarios
+```
+
+**Buscar colaboraciones de un usuario**
+
+```
+GET /api/neo4j/usuarios/{nombre}
+```
+
+---
+
+### 🟪 Cassandra – Lecturas de sensores
+
+**Insertar lectura**
+
+```
+POST /api/cassandra/sensores
+```
+
+Body:
+
+```json
+{
+  "id_sensor": "temp-01",
+  "valor": 22.5,
+  "fecha": "2025-10-08T19:00:00"
+}
+```
+
+**Ver todas las lecturas**
+
+```
+GET /api/cassandra/sensores
+```
+
+---
+
+## ⚖️ 5️⃣ Justificación técnica (para el informe)
+
+| Componente | Rol                        | Tipo de consistencia                         |
+| ---------- | -------------------------- | -------------------------------------------- |
+| MySQL      | Transaccional y relacional | **Consistencia fuerte (ACID)**               |
+| Neo4j      | Modelo de grafos           | **Lectura flexible (eventual)**              |
+| Cassandra  | Columnar distribuido       | **Alta disponibilidad (AP del teorema CAP)** |
+
+🧠 Cada motor se usa donde **mejor se desempeña**:
+
+* MySQL asegura integridad y unicidad (usuarios, facturas).
+* Neo4j optimiza la consulta de relaciones (colaboradores).
+* Cassandra garantiza escalabilidad en series de tiempo (sensores).
+
+---
+
+## 💡 6️⃣ Ejemplo de flujo completo
+
+1. Se crea un usuario en MySQL.
+2. Se relaciona con otros en Neo4j (colaboraciones).
+3. Sus sensores asociados envían lecturas a Cassandra.
+
+Todo el backend expone endpoints REST unificados.
+
+---
+
+## 🧪 7️⃣ Despliegue en múltiples clusters
+
+La app está preparada para escalar en **5 clusters distintos**, uno por base de datos:
+
+* 1 para MySQL (transaccional)
+* 1 para Neo4j (grafo)
+* 1 para Cassandra (columnar)
+* 1 para balanceo de carga
+* 1 para API Gateway o servicio de integración
+
+Esto demuestra la **tolerancia a fallos y escalabilidad** del enfoque poliglota.
+
+---
+
+## 🧰 8️⃣ Requisitos
+
+* Docker + Docker Compose
+* Java 17
+* Maven 3.9+
+* Postman (para probar endpoints)
+
+---
+
+## 👨‍💻 Equipo
+
+**Grupo 1 – Persistencia Políglota**
+
+* Rocco 🧠 (Backend / Integración)
+* Lucio ⚙️ (Cassandra)
+* Camila 💬 (Neo4j)
+* [Agregar el resto del equipo]
+
+---
+
+¿Querés que le agregue al final un mini **diagrama de arquitectura** en Mermaid (para poner en el README de GitHub)?
+Así se ve visualmente cómo interactúan los tres motores dentro del backend.
