@@ -38,10 +38,19 @@ public class TransaccionService {
     }
 
     public Pago registrarPago(Long facturaId, String metodo, Double monto) {
-        Factura factura = facturaRepo.findById(facturaId).orElseThrow();
-        Pago pago = new Pago(monto, metodo, LocalDateTime.now(), factura);
-        return pagoRepo.save(pago);
-    }
+    Factura factura = facturaRepo.findById(facturaId).orElseThrow();
+
+    // Crear el pago
+    Pago pago = new Pago(monto, metodo, LocalDateTime.now(), factura);
+    Pago pagoGuardado = pagoRepo.save(pago);
+
+    // 🔁 Actualizar estado de factura
+    factura.setEstado("PAGADA");
+    facturaRepo.save(factura);
+
+    return pagoGuardado;
+}
+
 
     public List<Factura> listarFacturas() {
         return facturaRepo.findAll();

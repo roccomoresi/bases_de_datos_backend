@@ -1,8 +1,15 @@
 package com.example.persistencia.poliglota.model.sql;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "pagos")
 public class Pago {
@@ -12,31 +19,20 @@ public class Pago {
     private Long id;
 
     private Double monto;
-    private String metodo;
+
+    private String metodoPago;
+
     private LocalDateTime fechaPago;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "factura_id")
     private Factura factura;
 
-    public Pago() {}
-
-    public Pago(Double monto, String metodo, LocalDateTime fechaPago, Factura factura) {
+    // ✅ Constructor usado en TransaccionService
+    public Pago(Double monto, String metodoPago, LocalDateTime fechaPago, Factura factura) {
         this.monto = monto;
-        this.metodo = metodo;
+        this.metodoPago = metodoPago;
         this.fechaPago = fechaPago;
         this.factura = factura;
     }
-
-    // Getters y setters
-    public Long getId() { return id; }
-    public Double getMonto() { return monto; }
-    public String getMetodo() { return metodo; }
-    public LocalDateTime getFechaPago() { return fechaPago; }
-    public Factura getFactura() { return factura; }
-
-    public void setMonto(Double monto) { this.monto = monto; }
-    public void setMetodo(String metodo) { this.metodo = metodo; }
-    public void setFechaPago(LocalDateTime fechaPago) { this.fechaPago = fechaPago; }
-    public void setFactura(Factura factura) { this.factura = factura; }
 }

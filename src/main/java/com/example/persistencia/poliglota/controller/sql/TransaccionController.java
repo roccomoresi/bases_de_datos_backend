@@ -7,7 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/sql")
+@RequestMapping("/api/sql/transacciones") // ✅ Cambiado para evitar conflicto con /facturas
+@CrossOrigin
 public class TransaccionController {
 
     private final TransaccionService transaccionService;
@@ -16,21 +17,29 @@ public class TransaccionController {
         this.transaccionService = transaccionService;
     }
 
+    // ✅ Crear usuario
     @PostMapping("/usuarios")
     public Usuario crearUsuario(@RequestBody Usuario usuario) {
-        return transaccionService.crearUsuario(usuario.getNombreCompleto(), usuario.getEmail());
+        return transaccionService.crearUsuario(usuario.getNombre(), usuario.getEmail());
     }
 
+    // ✅ Crear factura desde JSON
     @PostMapping("/facturas/{usuarioId}")
-    public Factura crearFactura(@PathVariable Long usuarioId, @RequestParam Double monto) {
-        return transaccionService.generarFactura(usuarioId, monto);
+    public Factura crearFactura(@PathVariable Long usuarioId, @RequestBody Factura facturaRequest) {
+        return transaccionService.generarFactura(usuarioId, facturaRequest.getMonto());
     }
 
+    // ✅ Registrar pago desde JSON
     @PostMapping("/pagos/{facturaId}")
-    public Pago crearPago(@PathVariable Long facturaId, @RequestParam String metodo, @RequestParam Double monto) {
-        return transaccionService.registrarPago(facturaId, metodo, monto);
+    public Pago crearPago(@PathVariable Long facturaId, @RequestBody Pago pagoRequest) {
+        return transaccionService.registrarPago(
+                facturaId,
+                pagoRequest.getMetodoPago(),
+                pagoRequest.getMonto()
+        );
     }
 
+    // ✅ Listar facturas
     @GetMapping("/facturas")
     public List<Factura> listarFacturas() {
         return transaccionService.listarFacturas();

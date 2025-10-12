@@ -1,8 +1,15 @@
 package com.example.persistencia.poliglota.model.sql;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "facturas")
 public class Factura {
@@ -11,30 +18,21 @@ public class Factura {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDate fecha;
-    private Double montoTotal;
+    private LocalDate fechaEmision;
+
+    private Double monto;
+
+    private String estado;
 
     @ManyToOne
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
-    @OneToOne(mappedBy = "factura", cascade = CascadeType.ALL)
-    private Pago pago;
-
-    public Factura() {}
-
-    public Factura(LocalDate fecha, Double montoTotal, Usuario usuario) {
-        this.fecha = fecha;
-        this.montoTotal = montoTotal;
+    // ✅ Constructor personalizado (usado en TransaccionService)
+    public Factura(LocalDate fecha, Double monto, Usuario usuario) {
+        this.fechaEmision = fecha;
+        this.monto = monto;
         this.usuario = usuario;
+        this.estado = "PENDIENTE";
     }
-
-    // Getters y setters
-    public Long getId() { return id; }
-    public LocalDate getFecha() { return fecha; }
-    public Double getMontoTotal() { return montoTotal; }
-    public Usuario getUsuario() { return usuario; }
-    public void setFecha(LocalDate fecha) { this.fecha = fecha; }
-    public void setMontoTotal(Double montoTotal) { this.montoTotal = montoTotal; }
-    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
 }

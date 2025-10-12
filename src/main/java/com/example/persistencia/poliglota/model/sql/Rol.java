@@ -13,6 +13,7 @@ public class Rol {
 
     private String nombre;
 
+    // ✅ Relación bidireccional: un rol puede tener muchos usuarios
     @OneToMany(mappedBy = "rol", cascade = CascadeType.ALL)
     private List<Usuario> usuarios;
 
