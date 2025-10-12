@@ -1,18 +1,25 @@
-package com.example.persistencia.poliglota.model.mongo;
+package com.example.persistencia.poliglota.model.sql;
 
-
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.*;
 import java.util.List;
 
-@Document(collection = "grupos")
+@Entity
+@Table(name = "grupos")
 public class Grupo {
 
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     private String nombre;
-    private List<String> miembros; // IDs de usuarios
+
+    @ManyToMany
+    @JoinTable(
+        name = "grupo_usuarios",
+        joinColumns = @JoinColumn(name = "grupo_id"),
+        inverseJoinColumns = @JoinColumn(name = "usuario_id")
+    )
+    private List<Usuario> miembros;
 
     // Getters y Setters
 }
-

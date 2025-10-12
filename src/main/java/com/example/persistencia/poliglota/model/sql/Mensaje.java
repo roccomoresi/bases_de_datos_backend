@@ -1,20 +1,31 @@
-package com.example.persistencia.poliglota.model.mongo;
+package com.example.persistencia.poliglota.model.sql;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Document(collection = "mensajes")
+@Entity
+@Table(name = "mensajes")
 public class Mensaje {
 
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    private String remitente;
-    private String destinatario; // usuario o grupo
     private String contenido;
     private String tipo; // privado o grupal
     private LocalDateTime fechaHora;
+
+    @ManyToOne
+    @JoinColumn(name = "remitente_id")
+    private Usuario remitente;
+
+    @ManyToOne
+    @JoinColumn(name = "destinatario_id", nullable = true)
+    private Usuario destinatario; // null si es grupal
+
+    @ManyToOne
+    @JoinColumn(name = "grupo_id", nullable = true)
+    private Grupo grupo; // null si es privado
 
     // Getters y Setters
 }
