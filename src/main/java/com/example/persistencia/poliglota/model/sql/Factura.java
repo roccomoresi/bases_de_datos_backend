@@ -22,6 +22,7 @@ public class Factura {
 
     private Double monto;
 
+    @Column(name = "estado")
     private String estado;
 
     @ManyToOne

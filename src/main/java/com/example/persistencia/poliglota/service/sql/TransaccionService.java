@@ -40,16 +40,28 @@ public class TransaccionService {
     public Pago registrarPago(Long facturaId, String metodo, Double monto) {
     Factura factura = facturaRepo.findById(facturaId).orElseThrow();
 
+    // Evitar pagar una factura ya pagada
+    if ("PAGADA".equalsIgnoreCase(factura.getEstado())) {
+        throw new IllegalStateException("La factura ya fue pagada anteriormente.");
+    }
+
     // Crear el pago
     Pago pago = new Pago(monto, metodo, LocalDateTime.now(), factura);
-    Pago pagoGuardado = pagoRepo.save(pago);
+    pagoRepo.save(pago);
 
-    // 🔁 Actualizar estado de factura
+    // 🔁 Actualizar el estado de la factura
     factura.setEstado("PAGADA");
     facturaRepo.save(factura);
 
-    return pagoGuardado;
+    // 🔄 Recargar la factura actualizada y asignarla al pago
+    Pago pagoActualizado = pagoRepo.findById(pago.getId()).orElseThrow();
+    Factura facturaActualizada = facturaRepo.findById(facturaId).orElseThrow();
+    pagoActualizado.setFactura(facturaActualizada);
+
+    return pagoActualizado;
 }
+
+
 
 
     public List<Factura> listarFacturas() {

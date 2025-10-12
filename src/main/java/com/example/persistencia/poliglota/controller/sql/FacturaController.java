@@ -30,7 +30,7 @@ public class FacturaController {
         }
     }
 
-    @GetMapping
+    @GetMapping("/transacciones/facturas")
     public ResponseEntity<?> listarFacturas() {
         try {
             return ResponseEntity.ok(facturaService.obtenerTodas());

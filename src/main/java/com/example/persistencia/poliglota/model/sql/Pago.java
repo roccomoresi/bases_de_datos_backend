@@ -24,9 +24,10 @@ public class Pago {
 
     private LocalDateTime fechaPago;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "factura_id")
     private Factura factura;
+
 
     // ✅ Constructor usado en TransaccionService
     public Pago(Double monto, String metodoPago, LocalDateTime fechaPago, Factura factura) {
