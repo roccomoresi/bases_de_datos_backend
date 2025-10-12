@@ -256,16 +256,6 @@ Esto demuestra la **tolerancia a fallos y escalabilidad** del enfoque poliglota.
 
 ---
 
-## 👨‍💻 Equipo
-
-**Grupo 1 – Persistencia Políglota**
-
-* Rocco 🧠 (Backend / Integración)
-* Lucio ⚙️ (Cassandra)
-* Camila 💬 (Neo4j)
-* [Agregar el resto del equipo]
 
 ---
 
-¿Querés que le agregue al final un mini **diagrama de arquitectura** en Mermaid (para poner en el README de GitHub)?
-Así se ve visualmente cómo interactúan los tres motores dentro del backend.

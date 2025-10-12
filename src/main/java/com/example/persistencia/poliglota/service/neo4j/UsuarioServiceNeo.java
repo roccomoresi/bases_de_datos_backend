@@ -7,11 +7,11 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class UsuarioService {
+public class UsuarioServiceNeo {
 
     private final Neo4jClient neo4jClient;
 
-    public UsuarioService(Neo4jClient neo4jClient) {
+    public UsuarioServiceNeo(Neo4jClient neo4jClient) {
         this.neo4jClient = neo4jClient;
     }
 

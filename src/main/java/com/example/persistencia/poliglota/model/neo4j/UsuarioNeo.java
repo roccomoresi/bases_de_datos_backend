@@ -5,7 +5,7 @@ import org.springframework.data.neo4j.core.schema.*;
 import java.util.List;
 
 @Node("Usuario")
-public class Usuario {
+public class UsuarioNeo {
 
     @Id
     private String id = java.util.UUID.randomUUID().toString();
@@ -18,14 +18,14 @@ public class Usuario {
     private List<Proceso> procesos;
 
     @Relationship(type = "COLABORA_CON", direction = Relationship.Direction.OUTGOING)
-    private List<Usuario> colaboradores;
+    private List<UsuarioNeo> colaboradores;
 
     @Relationship(type = "ENVIA")
     private List<Mensaje> mensajesEnviados;
 
-    public Usuario() {}
+    public UsuarioNeo() {}
 
-    public Usuario(String nombre, String email) {
+    public UsuarioNeo(String nombre, String email) {
         this.nombre = nombre;
         this.email = email;
     }

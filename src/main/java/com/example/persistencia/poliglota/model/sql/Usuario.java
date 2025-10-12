@@ -1,7 +1,6 @@
 package com.example.persistencia.poliglota.model.sql;
 
 import jakarta.persistence.*;
-import java.util.List;
 
 @Entity
 @Table(name = "usuarios")
@@ -11,27 +10,60 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nombre;
-    @Column(unique = true)
+    private String nombreCompleto;
     private String email;
+    private String password;
+
+    public Usuario() {} // necesario para JPA
+
+    public Usuario(String nombreCompleto, String email) {
+    this.nombreCompleto = nombreCompleto;
+    this.email = email;
+    }
 
 
-    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL)
-    private List<Factura> facturas;
+    @ManyToOne
+    @JoinColumn(name = "rol_id")
+    private Rol rol; // 👈 ESTE campo es el que necesita Rol para "mappedBy = rol"
 
-    public Usuario() {}
+    // --- Getters y Setters ---
+    public Long getId() {
+        return id;
+    }
 
-    public Usuario(String nombre, String email) {
-        this.nombre = nombre;
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getNombreCompleto() {
+        return nombreCompleto;
+    }
+
+    public void setNombreCompleto(String nombreCompleto) {
+        this.nombreCompleto = nombreCompleto;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
         this.email = email;
     }
 
-    // Getters y setters
-    public Long getId() { return id; }
-    public String getNombre() { return nombre; }
-    public String getEmail() { return email; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
-    public void setEmail(String email) { this.email = email; }
-    public List<Factura> getFacturas() { return facturas; }
-    public void setFacturas(List<Factura> facturas) { this.facturas = facturas; }
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public Rol getRol() {
+        return rol;
+    }
+
+    public void setRol(Rol rol) {
+        this.rol = rol;
+    }
 }

@@ -11,28 +11,28 @@ import java.util.List;
 @Service
 public class TransaccionService {
 
-    private final UsuarioSQLRepository usuarioRepo;
+    private final UsuarioRepository usuarioRepo;
     private final FacturaRepository facturaRepo;
     private final PagoRepository pagoRepo;
 
-    public TransaccionService(UsuarioSQLRepository usuarioRepo, FacturaRepository facturaRepo, PagoRepository pagoRepo) {
+    public TransaccionService(UsuarioRepository usuarioRepo, FacturaRepository facturaRepo, PagoRepository pagoRepo) {
         this.usuarioRepo = usuarioRepo;
         this.facturaRepo = facturaRepo;
         this.pagoRepo = pagoRepo;
     }
 
-    public UsuarioSQL crearUsuario(String nombre, String email) {
+    public Usuario crearUsuario(String nombre, String email) {
     boolean existe = usuarioRepo.findAll().stream()
             .anyMatch(u -> u.getEmail().equalsIgnoreCase(email));
     if (existe) {
         throw new IllegalArgumentException("El email '" + email + "' ya está registrado.");
     }
-    return usuarioRepo.save(new UsuarioSQL(nombre, email));
+    return usuarioRepo.save(new Usuario(nombre, email));
 }
 
 
     public Factura generarFactura(Long usuarioId, Double monto) {
-        UsuarioSQL usuario = usuarioRepo.findById(usuarioId).orElseThrow();
+        Usuario usuario = usuarioRepo.findById(usuarioId).orElseThrow();
         Factura factura = new Factura(LocalDate.now(), monto, usuario);
         return facturaRepo.save(factura);
     }

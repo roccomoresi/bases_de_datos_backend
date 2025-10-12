@@ -1,18 +1,18 @@
 package com.example.persistencia.poliglota.controller.neo4j;
 
-import com.example.persistencia.poliglota.model.neo4j.Usuario;
-import com.example.persistencia.poliglota.service.neo4j.UsuarioService;
+import com.example.persistencia.poliglota.model.neo4j.UsuarioNeo;
+import com.example.persistencia.poliglota.service.neo4j.UsuarioServiceNeo;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/neo4j/usuarios")
-public class UsuarioController {
+public class UsuarioControllerNeo {
 
-    private final UsuarioService usuarioService;
+    private final UsuarioServiceNeo usuarioService;
 
-    public UsuarioController(UsuarioService usuarioService) {
+    public UsuarioControllerNeo(UsuarioServiceNeo usuarioService) {
         this.usuarioService = usuarioService;
     }
 

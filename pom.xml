@@ -45,6 +45,30 @@
       <artifactId>spring-boot-starter-data-neo4j</artifactId>
     </dependency>
 
+<!-- ✅ SpringDoc OpenAPI compatible con Spring Boot 3.5.x -->
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    <version>2.7.0</version>
+</dependency>
+
+
+
+<!-- 🧩 Validaciones (necesario para Swagger y DTOs con anotaciones) -->
+<dependency>
+    <groupId>org.hibernate.validator</groupId>
+    <artifactId>hibernate-validator</artifactId>
+    <version>8.0.1.Final</version>
+</dependency>
+
+<!-- (opcional pero recomendable, provee mensajes por defecto en español si querés) -->
+<dependency>
+    <groupId>org.glassfish</groupId>
+    <artifactId>jakarta.el</artifactId>
+    <version>4.0.2</version>
+</dependency>
+
+
     <!-- Cassandra -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

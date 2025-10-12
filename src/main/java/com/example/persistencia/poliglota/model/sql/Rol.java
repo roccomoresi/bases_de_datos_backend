@@ -3,8 +3,6 @@ package com.example.persistencia.poliglota.model.sql;
 import jakarta.persistence.*;
 import java.util.List;
 
-import com.example.persistencia.poliglota.model.neo4j.Usuario;
-
 @Entity
 @Table(name = "roles")
 public class Rol {
@@ -13,11 +11,33 @@ public class Rol {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String descripcion; // usuario, técnico, administrador
+    private String nombre;
 
-    @OneToMany(mappedBy = "rol")
+    @OneToMany(mappedBy = "rol", cascade = CascadeType.ALL)
     private List<Usuario> usuarios;
 
-    // Getters y Setters
-}
+    // --- Getters y Setters ---
+    public Long getId() {
+        return id;
+    }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public List<Usuario> getUsuarios() {
+        return usuarios;
+    }
+
+    public void setUsuarios(List<Usuario> usuarios) {
+        this.usuarios = usuarios;
+    }
+}

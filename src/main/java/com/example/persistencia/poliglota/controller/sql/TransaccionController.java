@@ -18,7 +18,7 @@ public class TransaccionController {
 
     @PostMapping("/usuarios")
     public Usuario crearUsuario(@RequestBody Usuario usuario) {
-        return transaccionService.crearUsuario(usuario.getNombre(), usuario.getEmail());
+        return transaccionService.crearUsuario(usuario.getNombreCompleto(), usuario.getEmail());
     }
 
     @PostMapping("/facturas/{usuarioId}")

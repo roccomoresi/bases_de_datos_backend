@@ -15,7 +15,7 @@ public class Mensaje {
     private LocalDate fecha;
 
     @Relationship(type = "DESTINADO_A")
-    private Usuario destinatario;
+    private UsuarioNeo destinatario;
 
     public Mensaje() {}
 
@@ -28,5 +28,5 @@ public class Mensaje {
     public String getId() { return id; }
     public String getContenido() { return contenido; }
     public LocalDate getFecha() { return fecha; }
-    public void setDestinatario(Usuario destinatario) { this.destinatario = destinatario; }
+    public void setDestinatario(UsuarioNeo destinatario) { this.destinatario = destinatario; }
 }
