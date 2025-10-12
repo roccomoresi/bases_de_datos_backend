@@ -16,14 +16,14 @@ public class Factura {
 
     @ManyToOne
     @JoinColumn(name = "usuario_id")
-    private UsuarioSQL usuario;
+    private Usuario usuario;
 
     @OneToOne(mappedBy = "factura", cascade = CascadeType.ALL)
     private Pago pago;
 
     public Factura() {}
 
-    public Factura(LocalDate fecha, Double montoTotal, UsuarioSQL usuario) {
+    public Factura(LocalDate fecha, Double montoTotal, Usuario usuario) {
         this.fecha = fecha;
         this.montoTotal = montoTotal;
         this.usuario = usuario;
@@ -33,8 +33,8 @@ public class Factura {
     public Long getId() { return id; }
     public LocalDate getFecha() { return fecha; }
     public Double getMontoTotal() { return montoTotal; }
-    public UsuarioSQL getUsuario() { return usuario; }
+    public Usuario getUsuario() { return usuario; }
     public void setFecha(LocalDate fecha) { this.fecha = fecha; }
     public void setMontoTotal(Double montoTotal) { this.montoTotal = montoTotal; }
-    public void setUsuario(UsuarioSQL usuario) { this.usuario = usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
 }

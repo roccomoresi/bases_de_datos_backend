@@ -5,7 +5,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "usuarios")
-public class UsuarioSQL {
+public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,9 +19,9 @@ public class UsuarioSQL {
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL)
     private List<Factura> facturas;
 
-    public UsuarioSQL() {}
+    public Usuario() {}
 
-    public UsuarioSQL(String nombre, String email) {
+    public Usuario(String nombre, String email) {
         this.nombre = nombre;
         this.email = email;
     }
