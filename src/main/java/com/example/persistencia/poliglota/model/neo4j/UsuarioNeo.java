@@ -2,13 +2,17 @@ package com.example.persistencia.poliglota.model.neo4j;
 
 import org.springframework.data.neo4j.core.schema.*;
 
+import jnr.ffi.Struct.u_int16_t;
+
 import java.util.List;
+import java.util.UUID;
 
 @Node("Usuario")
 public class UsuarioNeo {
 
     @Id
-    private String id = java.util.UUID.randomUUID().toString();
+    private UUID id = UUID.randomUUID();
+
 
 
     private String nombre;
@@ -31,7 +35,7 @@ public class UsuarioNeo {
     }
 
     // Getters y setters
-    public String getId() { return id; }
+    public UUID getId() { return id; }
     public String getNombre() { return nombre; }
     public String getEmail() { return email; }
     public void setNombre(String nombre) { this.nombre = nombre; }

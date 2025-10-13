@@ -5,6 +5,7 @@ import com.example.persistencia.poliglota.repository.sql.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UsuarioService {
@@ -19,7 +20,7 @@ public class UsuarioService {
         return usuarioRepository.findAll();
     }
 
-    public Optional<Usuario> getById(Long id) {
+    public Optional<Usuario> getById(UUID id) {
         return usuarioRepository.findById(id);
     }
 
@@ -27,7 +28,7 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-    public void delete(Long id) {
+    public void delete(UUID id) {
         usuarioRepository.deleteById(id);
     }
 

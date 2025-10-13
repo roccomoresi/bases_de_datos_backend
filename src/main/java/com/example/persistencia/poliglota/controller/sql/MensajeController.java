@@ -6,6 +6,7 @@ import com.example.persistencia.poliglota.service.sql.MensajeService;
 import com.example.persistencia.poliglota.service.sql.UsuarioService;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/mensajes")
@@ -21,7 +22,7 @@ public class MensajeController {
     }
 
     @GetMapping("/usuario/{id}")
-    public List<Mensaje> getMensajesPorUsuario(@PathVariable Long id) {
+    public List<Mensaje> getMensajesPorUsuario(@PathVariable UUID id) {
         Usuario usuario = usuarioService.getById(id).orElseThrow();
         return mensajeService.getMensajesDeUsuario(usuario);
     }

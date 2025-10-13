@@ -5,6 +5,7 @@ import com.example.persistencia.poliglota.model.sql.*;
 import com.example.persistencia.poliglota.service.sql.TransaccionService;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/sql")
@@ -24,7 +25,7 @@ public class TransaccionController {
 
     // ✅ NUEVO: ruta corregida
     @PostMapping("/transacciones/facturas/{usuarioId}")
-    public Factura crearFactura(@PathVariable Long usuarioId, @RequestBody Factura facturaRequest) {
+    public Factura crearFactura(@PathVariable UUID usuarioId, @RequestBody Factura facturaRequest) {
         return transaccionService.generarFactura(usuarioId, facturaRequest.getMonto());
     }
 

@@ -33,7 +33,7 @@ public class ReportesController {
     }
 
     @GetMapping("/usuario/{id}")
-    public Map<String, Object> getReporteGlobal(@PathVariable Long id) {
+    public Map<String, Object> getReporteGlobal(@PathVariable UUID id) {
         Map<String, Object> response = new HashMap<>();
 
         // 🧠 Datos relacionales (MySQL)

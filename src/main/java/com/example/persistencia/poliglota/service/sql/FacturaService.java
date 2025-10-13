@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class FacturaService {
@@ -20,7 +21,7 @@ public class FacturaService {
     private UsuarioRepository usuarioRepository;
 
     // ✅ Crear factura asociada a un usuario
-    public Factura crearFactura(Long usuarioId, Double monto, String fecha) {
+    public Factura crearFactura(UUID usuarioId, Double monto, String fecha) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 

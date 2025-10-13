@@ -2,14 +2,16 @@ package com.example.persistencia.poliglota.model.sql;
 
 import jakarta.persistence.*;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "roles")
 public class Rol {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@GeneratedValue(strategy = GenerationType.UUID)
+private UUID id;
+
 
     private String nombre;
 
@@ -18,11 +20,11 @@ public class Rol {
     private List<Usuario> usuarios;
 
     // --- Getters y Setters ---
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

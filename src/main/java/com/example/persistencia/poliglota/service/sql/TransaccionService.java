@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class TransaccionService {
@@ -31,7 +32,7 @@ public class TransaccionService {
 }
 
 
-    public Factura generarFactura(Long usuarioId, Double monto) {
+    public Factura generarFactura(UUID usuarioId, Double monto) {
         Usuario usuario = usuarioRepo.findById(usuarioId).orElseThrow();
         Factura factura = new Factura(LocalDate.now(), monto, usuario);
         return facturaRepo.save(factura);

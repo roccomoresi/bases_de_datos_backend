@@ -1,5 +1,6 @@
 package com.example.persistencia.poliglota.model.cassandra;
 
+import org.springframework.data.cassandra.core.cql.Ordering;
 import org.springframework.data.cassandra.core.cql.PrimaryKeyType;
 import org.springframework.data.cassandra.core.mapping.*;
 
@@ -12,8 +13,14 @@ public class Medicion {
     @PrimaryKeyColumn(name = "sensor_id", type = PrimaryKeyType.PARTITIONED)
     private UUID sensorId;
 
-    @PrimaryKeyColumn(name = "timestamp", type = PrimaryKeyType.CLUSTERED)
-    private Instant timestamp;
+    @PrimaryKeyColumn(
+    name = "timestamp",
+    type = PrimaryKeyType.CLUSTERED,
+    ordering = Ordering.DESCENDING
+)
+private Instant timestamp;
+
+
 
     @Column("valor")
     private double valor;

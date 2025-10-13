@@ -3,12 +3,14 @@ package com.example.persistencia.poliglota.model.neo4j;
 import org.springframework.data.neo4j.core.schema.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @Node("Proceso")
 public class Proceso {
 
     @Id
-    private String id = java.util.UUID.randomUUID().toString();
+    private UUID id = UUID.randomUUID();
+
 
 
     private String nombre;
@@ -27,9 +29,33 @@ public class Proceso {
     }
 
     // Getters y setters
-    public String getId() { return id; }
+    public UUID getId() { return id; }
     public String getNombre() { return nombre; }
     public String getTipo() { return tipo; }
     public String getEstado() { return estado; }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
+
+    public List<Proceso> getDependencias() {
+        return dependencias;
+    }
+
+    public void setDependencias(List<Proceso> dependencias) {
+        this.dependencias = dependencias;
+    }
 }
 

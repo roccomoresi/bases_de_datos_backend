@@ -1,27 +1,50 @@
 package com.example.persistencia.poliglota.model.cassandra;
 
+import org.springframework.data.cassandra.core.mapping.Indexed;
 import org.springframework.data.cassandra.core.mapping.PrimaryKey;
 import org.springframework.data.cassandra.core.mapping.Table;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Table("sensores")
 public class Sensor {
 
     @PrimaryKey
-    private String id;
+    private UUID id;
+
 
     private String nombre;
     private String tipo; // temperatura / humedad
+    @Indexed
     private String ciudad;
+    @Indexed
     private String pais;
     private double latitud;
     private double longitud;
     private String estado; // activo / inactivo / falla
-    private LocalDate fechaInicio;
-    public String getId() {
+    private LocalDate fecha_inicio_emision;
+
+
+
+
+    public Sensor(UUID id, String nombre, String tipo, @Indexed String ciudad, @Indexed String pais, double latitud,
+            double longitud, String estado, LocalDate fecha_inicio_emision) {
+        this.id = id;
+        this.nombre = nombre;
+        this.tipo = tipo;
+        this.ciudad = ciudad;
+        this.pais = pais;
+        this.latitud = latitud;
+        this.longitud = longitud;
+        this.estado = estado;
+        this.fecha_inicio_emision = fecha_inicio_emision;
+    }
+
+    
+    public UUID getId() {
         return id;
     }
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
     public String getNombre() {
@@ -67,10 +90,16 @@ public class Sensor {
         this.estado = estado;
     }
     public LocalDate getFechaInicio() {
-        return fechaInicio;
+        return fecha_inicio_emision;
     }
-    public void setFechaInicio(LocalDate fechaInicio) {
-        this.fechaInicio = fechaInicio;
+    public void setFechaInicio(LocalDate fecha_inicio_emision) {
+        this.fecha_inicio_emision = fecha_inicio_emision;
+    }
+    public LocalDate getFecha_inicio_emision() {
+        return fecha_inicio_emision;
+    }
+    public void setFecha_inicio_emision(LocalDate fecha_inicio_emision) {
+        this.fecha_inicio_emision = fecha_inicio_emision;
     }
 
     // Getters y Setters

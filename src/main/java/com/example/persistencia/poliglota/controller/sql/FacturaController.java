@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/sql/facturas")
@@ -19,7 +20,7 @@ public class FacturaController {
 
     @PostMapping("/{usuarioId}")
     public ResponseEntity<?> crearFactura(
-            @PathVariable Long usuarioId,
+            @PathVariable UUID usuarioId,
             @RequestBody FacturaRequest request) {
         try {
             Factura factura = facturaService.crearFactura(usuarioId, request.getMonto(), request.getFecha());

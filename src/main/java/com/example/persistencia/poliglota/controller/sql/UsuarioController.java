@@ -5,6 +5,7 @@ import com.example.persistencia.poliglota.service.sql.UsuarioService;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -23,7 +24,7 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
-    public Optional<Usuario> getById(@PathVariable Long id) {
+    public Optional<Usuario> getById(@PathVariable UUID id) {
         return usuarioService.getById(id);
     }
 
@@ -33,7 +34,7 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable UUID id) {
         usuarioService.delete(id);
     }
 }
