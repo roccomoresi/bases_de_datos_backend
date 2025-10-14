@@ -5,6 +5,7 @@ import com.example.persistencia.poliglota.service.neo4j.AlertaService;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/alertas")
@@ -23,7 +24,7 @@ public class AlertaController {
     }
 
     @GetMapping("/{id}")
-    public Optional<Alerta> getById(@PathVariable Long id) {
+    public Optional<Alerta> getById(@PathVariable UUID id) {
         return alertaService.getById(id);
     }
 
@@ -33,7 +34,7 @@ public class AlertaController {
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable UUID id) {
         alertaService.delete(id);
     }
 }

@@ -5,6 +5,7 @@ import com.example.persistencia.poliglota.repository.neo4j.AlertaRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class AlertaService {
@@ -19,7 +20,7 @@ public class AlertaService {
         return alertaRepository.findAll();
     }
 
-    public Optional<Alerta> getById(Long id) {
+    public Optional<Alerta> getById(UUID id) {
         return alertaRepository.findById(id);
     }
 
@@ -27,7 +28,7 @@ public class AlertaService {
         return alertaRepository.save(alerta);
     }
 
-    public void delete(Long id) {
+    public void delete(UUID id) {
         alertaRepository.deleteById(id);
     }
 }

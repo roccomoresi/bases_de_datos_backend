@@ -4,8 +4,9 @@ import com.example.persistencia.poliglota.model.neo4j.UsuarioNeo;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import java.util.List;
+import java.util.UUID;
 
-public interface UsuarioRepositoryNeo extends Neo4jRepository<UsuarioNeo, String> {
+public interface UsuarioRepositoryNeo extends Neo4jRepository<UsuarioNeo, UUID> {
 
     @Query("MATCH (u:Usuario)-[:COLABORA_CON]->(colab) RETURN u, collect(colab)")
     List<UsuarioNeo> findAllWithColaboradores();
