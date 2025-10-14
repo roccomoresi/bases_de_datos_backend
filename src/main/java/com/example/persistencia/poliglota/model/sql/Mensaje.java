@@ -2,14 +2,15 @@ package com.example.persistencia.poliglota.model.sql;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "mensajes")
 public class Mensaje {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     private String contenido;
     private String tipo; // privado o grupal
