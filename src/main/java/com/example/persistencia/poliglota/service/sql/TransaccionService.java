@@ -39,7 +39,7 @@ public class TransaccionService {
     }
 
     public Pago registrarPago(Long facturaId, String metodo, Double monto) {
-    Factura factura = facturaRepo.findById(facturaId).orElseThrow();
+    Factura factura = facturaRepo.findBy(facturaId).orElseThrow();
 
     // Evitar pagar una factura ya pagada
     if ("PAGADA".equalsIgnoreCase(factura.getEstado())) {

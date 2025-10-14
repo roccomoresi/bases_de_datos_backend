@@ -1,4 +1,4 @@
-package com.example.persistencia.poliglota.controller.neo4j;
+package com.example.persistencia.poliglota.controller.mongo;
 
 import com.example.persistencia.poliglota.model.mongo.Alerta;
 import com.example.persistencia.poliglota.service.mongo.AlertaService;
