@@ -1,7 +1,8 @@
-package com.example.persistencia.poliglota.service.neo4j;
+package com.example.persistencia.poliglota.service.mongo;
 
-import com.example.persistencia.poliglota.model.neo4j.Alerta;
-import com.example.persistencia.poliglota.repository.neo4j.AlertaRepository;
+import com.example.persistencia.poliglota.model.mongo.Alerta;
+import com.example.persistencia.poliglota.repository.mongo.AlertaRepository;
+
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;

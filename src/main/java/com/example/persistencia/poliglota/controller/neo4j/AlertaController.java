@@ -1,7 +1,8 @@
 package com.example.persistencia.poliglota.controller.neo4j;
 
-import com.example.persistencia.poliglota.model.neo4j.Alerta;
-import com.example.persistencia.poliglota.service.neo4j.AlertaService;
+import com.example.persistencia.poliglota.model.mongo.Alerta;
+import com.example.persistencia.poliglota.service.mongo.AlertaService;
+
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;

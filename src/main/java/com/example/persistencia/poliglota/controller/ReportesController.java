@@ -3,7 +3,7 @@ package com.example.persistencia.poliglota.controller;
 import com.example.persistencia.poliglota.model.sql.Usuario;
 import com.example.persistencia.poliglota.model.sql.Factura;
 import com.example.persistencia.poliglota.model.cassandra.Sensor;
-import com.example.persistencia.poliglota.model.neo4j.Alerta;
+import com.example.persistencia.poliglota.model.mongo.Alerta;
 import com.example.persistencia.poliglota.service.sql.UsuarioService;
 import com.example.persistencia.poliglota.service.sql.FacturaService;
 import com.example.persistencia.poliglota.service.cassandra.SensorService;

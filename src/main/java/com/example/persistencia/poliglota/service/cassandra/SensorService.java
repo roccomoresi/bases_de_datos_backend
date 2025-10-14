@@ -4,8 +4,6 @@ import com.example.persistencia.poliglota.model.cassandra.Sensor;
 import com.example.persistencia.poliglota.repository.cassandra.SensorRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class SensorService {
@@ -20,15 +18,7 @@ public class SensorService {
         return sensorRepository.findAll();
     }
 
-    public Optional<Sensor> getById(UUID id) {
-        return sensorRepository.findById(id);
-    }
-
     public Sensor save(Sensor sensor) {
         return sensorRepository.save(sensor);
-    }
-
-    public void delete(UUID id) {
-        sensorRepository.deleteById(id);
     }
 }

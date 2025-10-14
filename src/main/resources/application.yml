@@ -20,14 +20,10 @@ spring:
     local-datacenter: datacenter1
     schema-action: create_if_not_exists
 
-  neo4j:
-    uri: bolt://localhost:7687
-    authentication:
-      username: neo4j
-      password: test1234
+    
+  mongodb:
+    uri: mongodb://localhost:27017/poliglota_mongo
 
-server:
-  port: 8080
 
 # 📘 Swagger / OpenAPI configuration
 springdoc:

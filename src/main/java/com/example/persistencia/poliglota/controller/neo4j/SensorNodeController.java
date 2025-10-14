@@ -1,6 +1,6 @@
 package com.example.persistencia.poliglota.controller.neo4j;
 
-import com.example.persistencia.poliglota.model.neo4j.SensorNode;
+import com.example.persistencia.poliglota.model.mongo.SensorNode;
 import com.example.persistencia.poliglota.service.neo4j.SensorNodeService;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -16,13 +16,13 @@ public class SensorNodeController {
         this.sensorNodeService = sensorNodeService;
     }
 
-    @GetMapping
-    public List<SensorNode> getAll() {
-        return sensorNodeService.getAll();
-    }
+    // @GetMapping
+    // public List<SensorNode> getAll() {
+    //     return sensorNodeService.getAll();
+    // }
 
-    @PostMapping
-    public SensorNode save(@RequestBody SensorNode sensorNode) {
-        return sensorNodeService.save(sensorNode);
-    }
+    // @PostMapping
+    // public SensorNode save(@RequestBody SensorNode sensorNode) {
+    //     return sensorNodeService.save(sensorNode);
+    // }
 }
