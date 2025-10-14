@@ -1,9 +1,11 @@
 package com.example.persistencia.poliglota.dto;
 
-import lombok.Data;
-
-@Data
 public class PagoRequest {
-    private Double monto;
     private String metodoPago;
+    private Double monto;
+
+    public String getMetodoPago() { return metodoPago; }
+    public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
+    public Double getMonto() { return monto; }
+    public void setMonto(Double monto) { this.monto = monto; }
 }
