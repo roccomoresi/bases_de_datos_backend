@@ -26,26 +26,21 @@ services:
     volumes:
       - cassandra_data:/var/lib/cassandra
     environment:
-      - CASSANDRA_CLUSTER_NAME=TestCluster
+      - CASSANDRA_CLUSTER_NAME=Test Cluster    # 👈 Usa exactamente este nombre
       - CASSANDRA_DC=datacenter1
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
     networks:
       - poliglota_net
 
-  # 🕸 Neo4j
-  neo4j_poliglota:
-    image: neo4j:5.22
-    container_name: neo4j_poliglota
+  # 🍃 MongoDB
+  mongo_poliglota:
+    image: mongo:7
+    container_name: mongo_poliglota
     restart: always
-    environment:
-      - NEO4J_AUTH=neo4j/neo4jpoliglota
-      - NEO4J_dbms_security_auth__minimum__password__length=4
     ports:
-      - "7474:7474"  # Panel web
-      - "7687:7687"  # Bolt (para conexión con Spring Boot)
+      - "27017:27017"
     volumes:
-      - neo4j_data:/data
-      - neo4j_logs:/logs
+      - mongo_data:/data/db
     networks:
       - poliglota_net
 
@@ -55,5 +50,4 @@ networks:
 volumes:
   mysql_data:
   cassandra_data:
-  neo4j_data:
-  neo4j_logs:
+  mongo_data:

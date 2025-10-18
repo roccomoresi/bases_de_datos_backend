@@ -7,7 +7,8 @@ import com.example.persistencia.poliglota.model.mongo.Alerta;
 import com.example.persistencia.poliglota.service.sql.UsuarioService;
 import com.example.persistencia.poliglota.service.sql.FacturaService;
 import com.example.persistencia.poliglota.service.cassandra.SensorService;
-import com.example.persistencia.poliglota.service.neo4j.AlertaService;
+import com.example.persistencia.poliglota.service.mongo.AlertaService;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;

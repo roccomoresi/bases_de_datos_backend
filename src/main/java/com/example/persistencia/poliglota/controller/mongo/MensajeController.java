@@ -1,18 +1,19 @@
 package com.example.persistencia.poliglota.controller.mongo;
 
 import com.example.persistencia.poliglota.model.mongo.Mensaje;
-import com.example.persistencia.poliglota.service.mongo.MensajeMongoService;
+import com.example.persistencia.poliglota.service.mongo.MensajeService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/mongo/mensajes")
-public class MensajeMongoController {
+public class MensajeController {
 
-    private final MensajeMongoService service;
+    private final MensajeService service;
 
-    public MensajeMongoController(MensajeMongoService service) {
+    public MensajeController(MensajeService service) {
         this.service = service;
     }
 
@@ -21,13 +22,23 @@ public class MensajeMongoController {
         return service.getAll();
     }
 
+    @GetMapping("/{id}")
+    public Mensaje getById(@PathVariable UUID id) {
+        return service.getById(id);
+    }
+
     @PostMapping
     public Mensaje save(@RequestBody Mensaje mensaje) {
         return service.save(mensaje);
     }
 
-    @GetMapping("/usuario/{email}")
-    public List<Mensaje> getByUsuario(@PathVariable String email) {
-        return service.findByUsuarioEmail(email);
+    @PutMapping("/{id}")
+    public Mensaje update(@PathVariable UUID id, @RequestBody Mensaje mensaje) {
+        return service.update(id, mensaje);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable UUID id) {
+        service.delete(id);
     }
 }

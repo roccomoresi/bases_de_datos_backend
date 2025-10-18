@@ -25,5 +25,45 @@ public class Proceso {
         this.dependencias = dependencias;
     }
 
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
+
+    public List<UUID> getDependencias() {
+        return dependencias;
+    }
+
+    public void setDependencias(List<UUID> dependencias) {
+        this.dependencias = dependencias;
+    }
+
     // Getters y Setters
 }
