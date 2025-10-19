@@ -1,10 +1,13 @@
 package com.example.persistencia.poliglota.controller.cassandra;
 
 import com.example.persistencia.poliglota.model.cassandra.Medicion;
+import com.example.persistencia.poliglota.model.cassandra.MedicionPorCiudad;
+import com.example.persistencia.poliglota.service.cassandra.MedicionGeneratorService;
 import com.example.persistencia.poliglota.service.cassandra.MedicionService;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,26 +16,35 @@ import java.util.UUID;
 public class MedicionController {
 
     private final MedicionService medicionService;
+    private final MedicionGeneratorService generatorService;
 
-    public MedicionController(MedicionService medicionService) {
-        this.medicionService = medicionService;
-    }
+    public MedicionController(MedicionService service, MedicionGeneratorService generatorService) {
+    this.medicionService = service;
+    this.generatorService = generatorService;
+}
 
     @GetMapping("/{sensorId}")
     public List<Medicion> obtenerPorSensor(@PathVariable UUID sensorId) {
         return medicionService.obtenerPorSensor(sensorId);
     }
 
-    @GetMapping("/{sensorId}/rango")
-    public List<Medicion> obtenerPorRango(
-            @PathVariable UUID sensorId,
-            @RequestParam Instant desde,
-            @RequestParam Instant hasta) {
-        return medicionService.obtenerPorRango(sensorId, desde, hasta);
+        @GetMapping("/ciudad/{ciudad}")
+    public List<MedicionPorCiudad> obtenerPorCiudad(
+            @PathVariable String ciudad,
+            @RequestParam String pais) {
+        return medicionService.obtenerPorCiudad(ciudad, pais);
     }
 
     @PostMapping
     public Medicion crearMedicion(@RequestBody Medicion medicion) {
         return medicionService.guardar(medicion);
     }
+
+    @PostMapping("/generar")
+public ResponseEntity<String> generarMediciones(
+        @RequestParam(defaultValue = "50") int cantidad) {
+    String resultado = generatorService.generarMediciones(cantidad);
+    return ResponseEntity.ok(resultado);
+}
+
 }

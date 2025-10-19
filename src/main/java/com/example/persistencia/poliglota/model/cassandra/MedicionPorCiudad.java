@@ -6,14 +6,20 @@ import org.springframework.data.cassandra.core.mapping.*;
 import java.time.Instant;
 import java.util.UUID;
 
-@Table("mediciones_por_sensor")
-public class Medicion {
+@Table("mediciones_por_ciudad")
+public class MedicionPorCiudad {
 
-    @PrimaryKeyColumn(name = "sensor_id", type = PrimaryKeyType.PARTITIONED)
-    private UUID sensorId;
+    @PrimaryKeyColumn(name = "ciudad", type = PrimaryKeyType.PARTITIONED)
+    private String ciudad;
+
+    @PrimaryKeyColumn(name = "pais", type = PrimaryKeyType.PARTITIONED)
+    private String pais;
 
     @PrimaryKeyColumn(name = "fecha_medicion", type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
     private Instant fechaMedicion;
+
+    @Column("sensor_id")
+    private UUID sensorId;
 
     @Column("temperatura")
     private double temperatura;
@@ -21,39 +27,33 @@ public class Medicion {
     @Column("humedad")
     private double humedad;
 
-    @Column("ciudad")
-    private String ciudad;
+    public MedicionPorCiudad() {}
 
-    @Column("pais")
-    private String pais;
-
-    public Medicion() {}
-
-    public Medicion(UUID sensorId, Instant fechaMedicion, double temperatura, double humedad, String ciudad, String pais) {
-        this.sensorId = sensorId;
-        this.fechaMedicion = fechaMedicion;
-        this.temperatura = temperatura;
-        this.humedad = humedad;
+    public MedicionPorCiudad(String ciudad, String pais, Instant fechaMedicion, UUID sensorId, double temperatura, double humedad) {
         this.ciudad = ciudad;
         this.pais = pais;
+        this.fechaMedicion = fechaMedicion;
+        this.sensorId = sensorId;
+        this.temperatura = temperatura;
+        this.humedad = humedad;
     }
 
-    // Getters y Setters
-    public UUID getSensorId() { return sensorId; }
-    public void setSensorId(UUID sensorId) { this.sensorId = sensorId; }
+    // Getters y setters
+    public String getCiudad() { return ciudad; }
+    public void setCiudad(String ciudad) { this.ciudad = ciudad; }
+
+    public String getPais() { return pais; }
+    public void setPais(String pais) { this.pais = pais; }
 
     public Instant getFechaMedicion() { return fechaMedicion; }
     public void setFechaMedicion(Instant fechaMedicion) { this.fechaMedicion = fechaMedicion; }
+
+    public UUID getSensorId() { return sensorId; }
+    public void setSensorId(UUID sensorId) { this.sensorId = sensorId; }
 
     public double getTemperatura() { return temperatura; }
     public void setTemperatura(double temperatura) { this.temperatura = temperatura; }
 
     public double getHumedad() { return humedad; }
     public void setHumedad(double humedad) { this.humedad = humedad; }
-
-    public String getCiudad() { return ciudad; }
-    public void setCiudad(String ciudad) { this.ciudad = ciudad; }
-
-    public String getPais() { return pais; }
-    public void setPais(String pais) { this.pais = pais; }
 }
