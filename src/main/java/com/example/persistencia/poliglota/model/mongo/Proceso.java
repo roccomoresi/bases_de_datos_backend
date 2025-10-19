@@ -15,19 +15,22 @@ public class Proceso {
     private String tipo; // Ej: "Informe", "Servicio", "Alerta", etc.
     private BigDecimal costo;
     private boolean activo = true;
+ 
+
+
+public Proceso(String nombre, String descripcion, String tipo, BigDecimal costo) {
+    this.id = UUID.randomUUID();
+    this.nombre = nombre;
+    this.descripcion = descripcion;
+    this.tipo = tipo;
+    this.costo = costo;
+    this.activo = true;
+}
+
 
     public Proceso() {
-        this.id = UUID.randomUUID();
-    }
+        this.id = UUID.randomUUID();}
 
-    public Proceso(String nombre, String descripcion, String tipo, BigDecimal costo) {
-        this.id = UUID.randomUUID();
-        this.nombre = nombre;
-        this.descripcion = descripcion;
-        this.tipo = tipo;
-        this.costo = costo;
-        this.activo = true;
-    }
 
     public UUID getId() {
         return id;

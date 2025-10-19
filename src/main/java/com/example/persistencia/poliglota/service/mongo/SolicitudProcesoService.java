@@ -1,5 +1,6 @@
 package com.example.persistencia.poliglota.service.mongo;
 
+import com.example.persistencia.poliglota.model.mongo.HistorialEjecucion;
 import com.example.persistencia.poliglota.model.mongo.Proceso;
 import com.example.persistencia.poliglota.model.mongo.SolicitudProceso;
 import com.example.persistencia.poliglota.repository.mongo.ProcesoRepository;
@@ -15,10 +16,15 @@ public class SolicitudProcesoService {
 
     private final SolicitudProcesoRepository repository;
     private final ProcesoRepository procesoRepository;
+    private final HistorialEjecucionService historialService;
 
-    public SolicitudProcesoService(SolicitudProcesoRepository repository, ProcesoRepository procesoRepository) {
+
+
+    public SolicitudProcesoService(SolicitudProcesoRepository repository, ProcesoRepository procesoRepository,
+            HistorialEjecucionService historialService) {
         this.repository = repository;
         this.procesoRepository = procesoRepository;
+        this.historialService = historialService;
     }
 
     public List<SolicitudProceso> getAll() {
@@ -44,20 +50,54 @@ public class SolicitudProcesoService {
         return repository.save(solicitud);
     }
 
-    public SolicitudProceso updateEstado(UUID id, String nuevoEstado) {
-        return repository.findById(id).map(s -> {
-            s.setEstado(nuevoEstado);
-            return repository.save(s);
-        }).orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+public SolicitudProceso updateEstado(UUID id, String nuevoEstado) {
+    SolicitudProceso solicitud = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+
+    solicitud.setEstado(nuevoEstado);
+    repository.save(solicitud);
+
+    // 🔹 Si el proceso fue completado, registramos historial
+    if ("completado".equalsIgnoreCase(nuevoEstado)) {
+        HistorialEjecucion log = new HistorialEjecucion(
+                solicitud.getProceso().getId(),
+                solicitud.getProceso().getNombre(),
+                solicitud.getUsuarioId(),
+                solicitud.getFechaSolicitud(),
+                java.time.LocalDateTime.now(),
+                solicitud.getResultado()
+        );
+        historialService.save(log);
+        System.out.println("📜 Historial registrado para el proceso: " + solicitud.getProceso().getNombre());
     }
 
-    public SolicitudProceso agregarResultado(UUID id, String resultado) {
-        return repository.findById(id).map(s -> {
-            s.setResultado(resultado);
-            s.setEstado("completado");
-            return repository.save(s);
-        }).orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+    return solicitud;
+}
+
+
+public SolicitudProceso agregarResultado(UUID id, String resultado) {
+    SolicitudProceso solicitud = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+
+    solicitud.setResultado(resultado);
+    solicitud.setEstado("completado");
+    repository.save(solicitud);
+
+    // 🔹 Sincronizar resultado en historial (si existe un log reciente)
+    List<HistorialEjecucion> historial = historialService.getByProceso(solicitud.getProceso().getId());
+    if (!historial.isEmpty()) {
+        HistorialEjecucion ultimo = historial.get(historial.size() - 1);
+        // solo si el historial pertenece al mismo usuario
+        if (ultimo.getUsuarioId().equals(solicitud.getUsuarioId())) {
+            ultimo.setResultado(resultado);
+            historialService.save(ultimo);
+            System.out.println("📝 Resultado actualizado también en historial: " + resultado);
+        }
     }
+
+    return solicitud;
+}
+
 
     public void delete(UUID id) {
         repository.deleteById(id);

@@ -13,6 +13,7 @@ import java.util.UUID;
 public class SolicitudProcesoController {
 
     private final SolicitudProcesoService service;
+    
 
     public SolicitudProcesoController(SolicitudProcesoService service) {
         this.service = service;
@@ -48,13 +49,16 @@ public class SolicitudProcesoController {
         return ResponseEntity.ok(service.create(usuarioId, procesoId));
     }
 
-    @PutMapping("/{id}/estado")
-    public ResponseEntity<SolicitudProceso> updateEstado(
-            @PathVariable UUID id,
-            @RequestParam String nuevoEstado
-    ) {
-        return ResponseEntity.ok(service.updateEstado(id, nuevoEstado));
-    }
+@PutMapping("/{id}/estado")
+public ResponseEntity<SolicitudProceso> updateEstado(
+        @PathVariable UUID id,
+        @RequestParam String nuevoEstado
+) {
+    return ResponseEntity.ok(service.updateEstado(id, nuevoEstado));
+}
+
+
+
 
     @PutMapping("/{id}/resultado")
     public ResponseEntity<SolicitudProceso> agregarResultado(
