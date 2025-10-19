@@ -18,5 +18,7 @@ public interface MedicionRepository extends CassandraRepository<Medicion, UUID> 
     @Query("SELECT * FROM mediciones_por_sensor " +
            "WHERE sensor_id = ?0 AND fecha_medicion >= ?1 AND fecha_medicion <= ?2")
     List<Medicion> findBySensorIdAndFechaBetween(UUID sensorId, Instant desde, Instant hasta);
+
+    long countBySensorId(UUID sensorId);
 }
 

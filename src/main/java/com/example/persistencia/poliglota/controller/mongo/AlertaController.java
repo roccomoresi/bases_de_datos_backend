@@ -2,40 +2,33 @@ package com.example.persistencia.poliglota.controller.mongo;
 
 import com.example.persistencia.poliglota.model.mongo.Alerta;
 import com.example.persistencia.poliglota.service.mongo.AlertaService;
-
+import com.example.persistencia.poliglota.repository.mongo.AlertaRepository;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/alertas")
-@CrossOrigin
+@RequestMapping("/api/mongo/alertas")
+@CrossOrigin(origins = "http://localhost:5173")
 public class AlertaController {
 
+    private final AlertaRepository alertaRepository;
     private final AlertaService alertaService;
 
-    public AlertaController(AlertaService alertaService) {
+    public AlertaController(AlertaRepository alertaRepository, AlertaService alertaService) {
+        this.alertaRepository = alertaRepository;
         this.alertaService = alertaService;
     }
 
     @GetMapping
     public List<Alerta> getAll() {
-        return alertaService.getAll();
+        return alertaRepository.findAll();
     }
 
-    @GetMapping("/{id}")
-    public Optional<Alerta> getById(@PathVariable UUID id) {
-        return alertaService.getById(id);
-    }
-
-    @PostMapping
-    public Alerta create(@RequestBody Alerta alerta) {
-        return alertaService.save(alerta);
-    }
-
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable UUID id) {
-        alertaService.delete(id);
+    @PutMapping("/{id}/resolver")
+    public String resolver(@PathVariable UUID id) {
+        alertaService.resolver(id);
+        return "✅ Alerta " + id + " marcada como resuelta.";
     }
 }

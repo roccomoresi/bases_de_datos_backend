@@ -40,11 +40,11 @@ public class MedicionController {
         return medicionService.guardar(medicion);
     }
 
-    @PostMapping("/generar")
-public ResponseEntity<String> generarMediciones(
-        @RequestParam(defaultValue = "50") int cantidad) {
-    String resultado = generatorService.generarMediciones(cantidad);
+@PostMapping("/generar-una-vez")
+public ResponseEntity<String> generarMedicionesUnaVez() {
+    String resultado = generatorService.generarMedicionesUnaVez();
     return ResponseEntity.ok(resultado);
 }
+
 
 }

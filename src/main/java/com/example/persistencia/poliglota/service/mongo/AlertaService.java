@@ -2,10 +2,8 @@ package com.example.persistencia.poliglota.service.mongo;
 
 import com.example.persistencia.poliglota.model.mongo.Alerta;
 import com.example.persistencia.poliglota.repository.mongo.AlertaRepository;
-
 import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.Optional;
+
 import java.util.UUID;
 
 @Service
@@ -17,19 +15,17 @@ public class AlertaService {
         this.alertaRepository = alertaRepository;
     }
 
-    public List<Alerta> getAll() {
-        return alertaRepository.findAll();
+    public void crear(UUID sensorId, String tipo, String descripcion, String ciudad, String pais) {
+        Alerta alerta = new Alerta(tipo, sensorId, descripcion, ciudad, pais);
+        alertaRepository.save(alerta);
+        System.out.println("🚨 Alerta creada: " + alerta.getDescripcion());
     }
 
-    public Optional<Alerta> getById(UUID id) {
-        return alertaRepository.findById(id);
-    }
-
-    public Alerta save(Alerta alerta) {
-        return alertaRepository.save(alerta);
-    }
-
-    public void delete(UUID id) {
-        alertaRepository.deleteById(id);
+    public void resolver(UUID id) {
+        alertaRepository.findById(id).ifPresent(alerta -> {
+            alerta.setEstado("resuelta");
+            alertaRepository.save(alerta);
+            System.out.println("✅ Alerta resuelta: " + id);
+        });
     }
 }

@@ -4,6 +4,7 @@ import com.example.persistencia.poliglota.model.cassandra.Medicion;
 import com.example.persistencia.poliglota.model.cassandra.Sensor;
 import com.example.persistencia.poliglota.repository.cassandra.MedicionRepository;
 import com.example.persistencia.poliglota.repository.cassandra.SensorRepository;
+import com.example.persistencia.poliglota.service.mongo.AlertaService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -16,41 +17,65 @@ public class MedicionSchedulerService {
 
     private final MedicionRepository medicionRepository;
     private final SensorRepository sensorRepository;
+    private final AlertaService alertaService;
     private final Random random = new Random();
 
-    public MedicionSchedulerService(MedicionRepository medicionRepository, SensorRepository sensorRepository) {
+    public MedicionSchedulerService(
+            MedicionRepository medicionRepository,
+            SensorRepository sensorRepository,
+            AlertaService alertaService
+    ) {
         this.medicionRepository = medicionRepository;
         this.sensorRepository = sensorRepository;
+        this.alertaService = alertaService;
     }
 
-    // 🔁 Genera una nueva medición cada 10 segundos
+    // 🔁 genera una nueva medición por sensor cada 10 s (hasta 5 por sensor)
     @Scheduled(fixedRate = 10000)
     public void generarMedicionesAutomaticas() {
         List<Sensor> sensores = sensorRepository.findAll();
         if (sensores.isEmpty()) return;
 
         for (Sensor sensor : sensores) {
+            long count = medicionRepository.countBySensorId(sensor.getId());
+            if (count >= 5) {
+                continue; // ya alcanzó el límite
+            }
+
             Medicion medicion = new Medicion();
             medicion.setSensorId(sensor.getId());
             medicion.setCiudad(sensor.getCiudad());
             medicion.setPais(sensor.getPais());
             medicion.setFechaMedicion(Instant.now());
 
-            // genera variaciones naturales
-            medicion.setTemperatura(generarTemperatura(sensor.getTipo()));
-            medicion.setHumedad(40 + random.nextDouble() * 40);
+            medicion.setTemperatura(20 + random.nextDouble() * 20); // 20–40°C
+            medicion.setHumedad(15 + random.nextDouble() * 70);     // 15–85%
 
             medicionRepository.save(medicion);
-            System.out.println("🌡️ Nueva medición generada para " + sensor.getNombre());
-        }
-    }
+            System.out.println("🌡️ Nueva medición automática para " + sensor.getNombre() +
+                    " (" + (count + 1) + "/5)");
 
-    private double generarTemperatura(String tipo) {
-        double base = switch (tipo.toLowerCase()) {
-            case "temperatura" -> 20 + random.nextDouble() * 10; // 20–30°C
-            case "humedad" -> 15 + random.nextDouble() * 8;
-            default -> 18 + random.nextDouble() * 5;
-        };
-        return Math.round(base * 10.0) / 10.0;
+            if (medicion.getTemperatura() > 35) {
+                alertaService.crear(
+                        sensor.getId(),
+                        "climatica",
+                        "🔥 Temperatura alta en " + sensor.getCiudad() + ": "
+                                + medicion.getTemperatura() + "°C",
+                        sensor.getCiudad(),
+                        sensor.getPais()
+                );
+            }
+
+            if (medicion.getHumedad() < 25) {
+                alertaService.crear(
+                        sensor.getId(),
+                        "climatica",
+                        "💧 Humedad baja en " + sensor.getCiudad() + ": "
+                                + medicion.getHumedad() + "%",
+                        sensor.getCiudad(),
+                        sensor.getPais()
+                );
+            }
+        }
     }
 }
