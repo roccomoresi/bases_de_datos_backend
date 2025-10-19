@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 @Service
@@ -62,17 +63,25 @@ public class MedicionGeneratorService {
                 medicionRepository.save(medicion);
                 total++;
 
-                // 🚨 Crear alertas si hay valores fuera de rango
                 if (medicion.getTemperatura() > 35) {
-                    alertaService.crear(
-                            sensor.getId(),
-                            "climatica",
-                            "🔥 Temperatura alta en " + sensor.getCiudad() +
-                                    ": " + medicion.getTemperatura() + "°C",
-                            sensor.getCiudad(),
-                            sensor.getPais()
-                    );
-                }
+    Map<String, Object> detalles = Map.of(
+        "temperatura", medicion.getTemperatura(),
+        "humedad", medicion.getHumedad(),
+        "umbralMax", 35,
+        "fuente", "cassandra"
+    );
+
+    alertaService.crearConDetalles(
+        sensor.getId(),
+        "climatica",
+        "🔥 Temperatura alta en " + sensor.getCiudad() +
+            ": " + medicion.getTemperatura() + "°C",
+        sensor.getCiudad(),
+        sensor.getPais(),
+        detalles
+    );
+}
+
 
                 if (medicion.getHumedad() < 25) {
                     alertaService.crear(
