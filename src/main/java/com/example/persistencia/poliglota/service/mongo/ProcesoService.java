@@ -3,7 +3,6 @@ package com.example.persistencia.poliglota.service.mongo;
 import com.example.persistencia.poliglota.model.mongo.Proceso;
 import com.example.persistencia.poliglota.repository.mongo.ProcesoRepository;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -11,35 +10,54 @@ import java.util.UUID;
 @Service
 public class ProcesoService {
 
-    private final ProcesoRepository procesoRepository;
+    private final ProcesoRepository repository;
 
-    public ProcesoService(ProcesoRepository procesoRepository) {
-        this.procesoRepository = procesoRepository;
+    public ProcesoService(ProcesoRepository repository) {
+        this.repository = repository;
     }
 
-    // ✅ Obtener todos los procesos
     public List<Proceso> getAll() {
-        return procesoRepository.findAll();
+        return repository.findAll();
     }
 
-    // ✅ Obtener proceso por ID
+    public List<Proceso> getActivos() {
+        return repository.findByActivoTrue();
+    }
+
     public Optional<Proceso> getById(UUID id) {
-        return procesoRepository.findById(id);
+        return repository.findById(id);
     }
 
-    // ✅ Crear o actualizar proceso
+    public List<Proceso> getByTipo(String tipo) {
+        return repository.findByTipoIgnoreCase(tipo);
+    }
+
     public Proceso save(Proceso proceso) {
         if (proceso.getId() == null) {
             proceso.setId(UUID.randomUUID());
         }
-        return procesoRepository.save(proceso);
+        return repository.save(proceso);
     }
 
-    // ✅ Eliminar proceso por ID
-    public void deleteById(UUID id) {
-        if (!procesoRepository.existsById(id)) {
-            throw new RuntimeException("Proceso no encontrado con ID: " + id);
-        }
-        procesoRepository.deleteById(id);
+    public Proceso update(UUID id, Proceso updated) {
+        return repository.findById(id).map(p -> {
+            p.setNombre(updated.getNombre());
+            p.setDescripcion(updated.getDescripcion());
+            p.setTipo(updated.getTipo());
+            p.setCosto(updated.getCosto());
+            p.setActivo(updated.isActivo());
+            return repository.save(p);
+        }).orElseThrow(() -> new RuntimeException("Proceso no encontrado"));
+    }
+
+    public void delete(UUID id) {
+        repository.deleteById(id);
+    }
+
+    public Proceso toggleEstado(UUID id) {
+        return repository.findById(id).map(p -> {
+            p.setActivo(!p.isActivo());
+            return repository.save(p);
+        }).orElseThrow(() -> new RuntimeException("Proceso no encontrado"));
     }
 }

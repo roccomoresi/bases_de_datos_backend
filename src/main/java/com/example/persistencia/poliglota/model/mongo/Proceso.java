@@ -2,27 +2,31 @@ package com.example.persistencia.poliglota.model.mongo;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import java.util.List;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Document(collection = "procesos")
 public class Proceso {
 
     @Id
-    private UUID id = UUID.randomUUID();
-
+    private UUID id;
     private String nombre;
-    private String tipo;
-    private String estado;
-    private List<UUID> dependencias; // IDs de otros procesos
+    private String descripcion;
+    private String tipo; // Ej: "Informe", "Servicio", "Alerta", etc.
+    private BigDecimal costo;
+    private boolean activo = true;
 
-    public Proceso() {}
+    public Proceso() {
+        this.id = UUID.randomUUID();
+    }
 
-    public Proceso(String nombre, String tipo, String estado, List<UUID> dependencias) {
+    public Proceso(String nombre, String descripcion, String tipo, BigDecimal costo) {
+        this.id = UUID.randomUUID();
         this.nombre = nombre;
+        this.descripcion = descripcion;
         this.tipo = tipo;
-        this.estado = estado;
-        this.dependencias = dependencias;
+        this.costo = costo;
+        this.activo = true;
     }
 
     public UUID getId() {
@@ -41,6 +45,14 @@ public class Proceso {
         this.nombre = nombre;
     }
 
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
     public String getTipo() {
         return tipo;
     }
@@ -49,21 +61,19 @@ public class Proceso {
         this.tipo = tipo;
     }
 
-    public String getEstado() {
-        return estado;
+    public BigDecimal getCosto() {
+        return costo;
     }
 
-    public void setEstado(String estado) {
-        this.estado = estado;
+    public void setCosto(BigDecimal costo) {
+        this.costo = costo;
     }
 
-    public List<UUID> getDependencias() {
-        return dependencias;
+    public boolean isActivo() {
+        return activo;
     }
 
-    public void setDependencias(List<UUID> dependencias) {
-        this.dependencias = dependencias;
+    public void setActivo(boolean activo) {
+        this.activo = activo;
     }
-
-    // Getters y Setters
 }

@@ -2,15 +2,13 @@ package com.example.persistencia.poliglota.controller.mongo;
 
 import com.example.persistencia.poliglota.model.mongo.Proceso;
 import com.example.persistencia.poliglota.service.mongo.ProcesoService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/mongo/procesos")
-@CrossOrigin
 public class ProcesoController {
 
     private final ProcesoService service;
@@ -19,27 +17,46 @@ public class ProcesoController {
         this.service = service;
     }
 
-    // ✅ Obtener todos los procesos
     @GetMapping
-    public List<Proceso> getAll() {
-        return service.getAll();
+    public ResponseEntity<List<Proceso>> getAll() {
+        return ResponseEntity.ok(service.getAll());
     }
 
-    // ✅ Obtener proceso por ID
+    @GetMapping("/activos")
+    public ResponseEntity<List<Proceso>> getActivos() {
+        return ResponseEntity.ok(service.getActivos());
+    }
+
     @GetMapping("/{id}")
-    public Optional<Proceso> getById(@PathVariable UUID id) {
-        return service.getById(id);
+    public ResponseEntity<Proceso> getById(@PathVariable UUID id) {
+        return service.getById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    // ✅ Crear o actualizar proceso
+    @GetMapping("/tipo/{tipo}")
+    public ResponseEntity<List<Proceso>> getByTipo(@PathVariable String tipo) {
+        return ResponseEntity.ok(service.getByTipo(tipo));
+    }
+
     @PostMapping
-    public Proceso save(@RequestBody Proceso proceso) {
-        return service.save(proceso);
+    public ResponseEntity<Proceso> save(@RequestBody Proceso proceso) {
+        return ResponseEntity.ok(service.save(proceso));
     }
 
-    // ✅ Eliminar proceso
+    @PutMapping("/{id}")
+    public ResponseEntity<Proceso> update(@PathVariable UUID id, @RequestBody Proceso proceso) {
+        return ResponseEntity.ok(service.update(id, proceso));
+    }
+
+    @PutMapping("/{id}/toggle")
+    public ResponseEntity<Proceso> toggleEstado(@PathVariable UUID id) {
+        return ResponseEntity.ok(service.toggleEstado(id));
+    }
+
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable UUID id) {
-        service.deleteById(id);
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }
