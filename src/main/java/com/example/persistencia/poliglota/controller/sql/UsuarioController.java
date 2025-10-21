@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -62,10 +63,37 @@ public ResponseEntity<?> getByEmail(@PathVariable String email) {
 
 
 
-    @PostMapping
-    public Usuario create(@RequestBody Usuario usuario) {
-        return service.save(usuario);
+@PostMapping
+public ResponseEntity<?> create(@RequestBody Usuario usuario) {
+    try {
+        if (usuario.getRol() == null || usuario.getRol().getIdRol() == null) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Rol inválido o ausente",
+                "detalle", usuario.getRol()
+            ));
+        }
+
+        Rol rolExistente = rolService.getById(usuario.getRol().getIdRol())
+                .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+
+        usuario.setRol(rolExistente);
+        Usuario nuevo = service.save(usuario);
+
+        // Crear cuenta corriente
+        CuentaCorriente cuenta = new CuentaCorriente();
+        cuenta.setUsuario(nuevo);
+        cuenta.setSaldoActual(0.0);
+        cuentaService.save(cuenta);
+
+        return ResponseEntity.ok(nuevo);
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.internalServerError().body(
+                Map.of("error", "Error interno", "detalle", e.getMessage()));
     }
+}
+
+
 
     @PutMapping("/{id}")
     public Usuario update(@PathVariable Integer id, @RequestBody Usuario usuario) {
