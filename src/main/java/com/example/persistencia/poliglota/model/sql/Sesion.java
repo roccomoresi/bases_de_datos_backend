@@ -6,23 +6,24 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
-@Table(name = "factura")
-public class Factura {
+@Table(name = "sesion")
+public class Sesion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer idFactura;
+    private Integer idSesion;
 
     @ManyToOne
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
-    private LocalDateTime fechaEmision = LocalDateTime.now();
-    private Double total = 0.0;
+    private String rol;
+    private LocalDateTime fechaInicio = LocalDateTime.now();
+    private LocalDateTime fechaCierre;
 
     @Enumerated(EnumType.STRING)
-    private EstadoFactura estado = EstadoFactura.pendiente;
+    private EstadoSesion estadoActual = EstadoSesion.activa;
 
-    public enum EstadoFactura {
-        pendiente, pagada, vencida
+    public enum EstadoSesion {
+        activa, inactiva
     }
 }

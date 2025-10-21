@@ -1,41 +1,28 @@
 package com.example.persistencia.poliglota.model.sql;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
-import java.util.UUID;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
-@Table(name = "pagos")
+@Data
+@Table(name = "pago")
 public class Pago {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer idPago;
 
-
-    private Double monto;
-
-    private String metodoPago;
-
-    private LocalDateTime fechaPago;
-
-    @ManyToOne(cascade = CascadeType.MERGE)
+    @ManyToOne
     @JoinColumn(name = "factura_id")
     private Factura factura;
 
+    private LocalDateTime fechaPago = LocalDateTime.now();
+    private Double montoPagado;
 
-    // ✅ Constructor usado en TransaccionService
-    public Pago(Double monto, String metodoPago, LocalDateTime fechaPago, Factura factura) {
-        this.monto = monto;
-        this.metodoPago = metodoPago;
-        this.fechaPago = fechaPago;
-        this.factura = factura;
+    @Enumerated(EnumType.STRING)
+    private MetodoPago metodoPago = MetodoPago.otros;
+
+    public enum MetodoPago {
+        tarjeta, transferencia, efectivo, otros
     }
 }

@@ -1,37 +1,33 @@
 package com.example.persistencia.poliglota.model.sql;
 
-import java.util.UUID;
-
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor  // ✅ Constructor vacío (necesario para JPA)
-@AllArgsConstructor // ✅ Constructor completo (si querés)
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "usuarios")
+@Data
+@Table(name = "usuario")
 public class Usuario {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;    
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer idUsuario;
 
-    private String nombre;
-
+    private String nombreCompleto;
     private String email;
+    private String contrasena;
 
-    private String password;
+    @Enumerated(EnumType.STRING)
+    private EstadoUsuario estado = EstadoUsuario.activo;
 
-        // ✅ Relación correcta: muchos usuarios pueden tener un rol
+    private LocalDateTime fechaRegistro = LocalDateTime.now();
+
     @ManyToOne
     @JoinColumn(name = "rol_id")
     private Rol rol;
 
-    // ✅ Constructor personalizado (para tu TransaccionService)
-    public Usuario(String nombre, String email) {
-        this.nombre = nombre;
-        this.email = email;
+    public enum EstadoUsuario {
+        activo, inactivo
     }
 }

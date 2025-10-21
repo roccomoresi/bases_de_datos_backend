@@ -6,41 +6,33 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class UsuarioService {
+    private final UsuarioRepository repository;
 
-    private final UsuarioRepository usuarioRepository;
-
-    public UsuarioService(UsuarioRepository usuarioRepository) {
-        this.usuarioRepository = usuarioRepository;
+    public UsuarioService(UsuarioRepository repository) {
+        this.repository = repository;
     }
 
-    // ✅ Obtener todos los usuarios
     public List<Usuario> getAll() {
-        return usuarioRepository.findAll();
+        return repository.findAll();
     }
 
-    // ✅ Buscar usuario por ID
-    public Optional<Usuario> getById(UUID id) {
-        return usuarioRepository.findById(id);
+    public Optional<Usuario> getById(Integer id) {
+        return repository.findById(id);
     }
 
-    // ✅ Crear o actualizar usuario
     public Usuario save(Usuario usuario) {
-        // Si no tiene ID (nuevo usuario), le asignamos uno
-        if (usuario.getId() == null) {
-            usuario.setId(UUID.randomUUID());
-        }
-        return usuarioRepository.save(usuario);
+        return repository.save(usuario);
     }
 
-    // ✅ Eliminar usuario por ID
-    public void delete(UUID id) {
-        if (!usuarioRepository.existsById(id)) {
-            throw new RuntimeException("Usuario no encontrado con ID: " + id);
-        }
-        usuarioRepository.deleteById(id);
+    public void delete(Integer id) {
+        repository.deleteById(id);
     }
+
+public Optional<Usuario> findByEmail(String email) {
+    return repository.findByEmail(email);
+}
+
 }
