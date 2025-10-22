@@ -102,9 +102,36 @@ public ResponseEntity<?> create(@RequestBody Usuario usuario) {
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Integer id) {
+public ResponseEntity<?> delete(@PathVariable Integer id) {
+    try {
+        // ✅ Primero eliminar la cuenta corriente del usuario
+        cuentaService.deleteByUsuarioId(id);
+
+        // Luego eliminar el usuario
         service.delete(id);
+
+        return ResponseEntity.ok().body(Map.of("mensaje", "Usuario eliminado correctamente"));
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.internalServerError().body(
+            Map.of("error", "Error interno", "detalle", e.getMessage())
+        );
     }
+}
+
+
+@PutMapping("/{id}/estado")
+public ResponseEntity<?> cambiarEstado(@PathVariable Integer id, @RequestParam String nuevoEstado) {
+    Optional<Usuario> opt = service.getById(id);
+    if (opt.isEmpty()) return ResponseEntity.notFound().build();
+
+    Usuario u = opt.get();
+    u.setEstado(Usuario.EstadoUsuario.valueOf(nuevoEstado));
+    service.save(u);
+    return ResponseEntity.ok(u);
+}
+
+
 
     @PostMapping("/login")
 public ResponseEntity<?> login(@RequestBody Usuario loginRequest) {

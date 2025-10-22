@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CuentaCorrienteRepository extends JpaRepository<CuentaCorriente, Integer> {
     CuentaCorriente findByUsuarioIdUsuario(Integer usuarioId);
+    void deleteByUsuario_IdUsuario(Integer idUsuario);
+
 }
