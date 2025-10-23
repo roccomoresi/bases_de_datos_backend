@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -46,7 +47,8 @@ public class MedicionSchedulerService {
             medicion.setSensorId(sensor.getId());
             medicion.setCiudad(sensor.getCiudad());
             medicion.setPais(sensor.getPais());
-            medicion.setFechaMedicion(Instant.now());
+            medicion.setFechaMedicion(Date.from(Instant.now()));
+
 
             medicion.setTemperatura(20 + random.nextDouble() * 20); // 20–40°C
             medicion.setHumedad(15 + random.nextDouble() * 70);     // 15–85%

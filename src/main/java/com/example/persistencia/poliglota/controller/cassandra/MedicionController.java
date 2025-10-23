@@ -65,10 +65,10 @@ public ResponseEntity<?> obtenerPorSensorYRangoFechas(
         return medicionService.guardar(medicion);
     }
 
-    // 🔹 Generar mediciones de prueba (una sola vez)
-    @PostMapping("/generar-una-vez")
-    public ResponseEntity<String> generarMedicionesUnaVez() {
-        String resultado = generatorService.generarMedicionesUnaVez();
-        return ResponseEntity.ok(resultado);
-    }
+    // // 🔹 Generar mediciones de prueba (una sola vez)
+    // @PostMapping("/generar-una-vez")
+    // public ResponseEntity<String> generarMedicionesUnaVez() {
+    //     String resultado = generatorService.generarMedicionesUnaVez();
+    //     return ResponseEntity.ok(resultado);
+    // }
 }

@@ -4,6 +4,7 @@ import org.springframework.data.cassandra.core.cql.Ordering;
 import org.springframework.data.cassandra.core.cql.PrimaryKeyType;
 import org.springframework.data.cassandra.core.mapping.*;
 import java.time.Instant;
+import java.util.Date;
 import java.util.UUID;
 
 @Table("mediciones_por_ciudad")
@@ -16,7 +17,7 @@ public class MedicionPorCiudad {
     private String pais;
 
     @PrimaryKeyColumn(name = "fecha_medicion", type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
-    private Instant fechaMedicion;
+    private Date fechaMedicion;
 
     @Column("sensor_id")
     private UUID sensorId;
@@ -29,14 +30,16 @@ public class MedicionPorCiudad {
 
     public MedicionPorCiudad() {}
 
-    public MedicionPorCiudad(String ciudad, String pais, Instant fechaMedicion, UUID sensorId, double temperatura, double humedad) {
-        this.ciudad = ciudad;
-        this.pais = pais;
-        this.fechaMedicion = fechaMedicion;
-        this.sensorId = sensorId;
-        this.temperatura = temperatura;
-        this.humedad = humedad;
-    }
+    public MedicionPorCiudad(String ciudad, String pais, Date fechaMedicion,
+                         UUID sensorId, double temperatura, double humedad) {
+    this.ciudad = ciudad;
+    this.pais = pais;
+    this.fechaMedicion = fechaMedicion;
+    this.sensorId = sensorId;
+    this.temperatura = temperatura;
+    this.humedad = humedad;
+}
+
 
     // Getters y setters
     public String getCiudad() { return ciudad; }
@@ -45,8 +48,8 @@ public class MedicionPorCiudad {
     public String getPais() { return pais; }
     public void setPais(String pais) { this.pais = pais; }
 
-    public Instant getFechaMedicion() { return fechaMedicion; }
-    public void setFechaMedicion(Instant fechaMedicion) { this.fechaMedicion = fechaMedicion; }
+    public Date getFechaMedicion() { return fechaMedicion; }
+    public void setFechaMedicion(Date fechaMedicion) { this.fechaMedicion = fechaMedicion; }
 
     public UUID getSensorId() { return sensorId; }
     public void setSensorId(UUID sensorId) { this.sensorId = sensorId; }
