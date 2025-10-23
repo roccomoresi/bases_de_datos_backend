@@ -19,7 +19,8 @@ public class Usuario {
     private String contrasena;
 
     @Enumerated(EnumType.STRING)
-    private EstadoUsuario estado = EstadoUsuario.activo;
+    @Column(name = "estado", nullable = false, length = 20)
+    private EstadoUsuario estado = EstadoUsuario.ACTIVO;
 
     private LocalDateTime fechaRegistro = LocalDateTime.now();
 
@@ -27,7 +28,9 @@ public class Usuario {
     @JoinColumn(name = "rol_id")
     private Rol rol;
 
-    public enum EstadoUsuario {
-        activo, inactivo
-    }
+public enum EstadoUsuario {
+    ACTIVO,
+    INACTIVO
+}
+
 }

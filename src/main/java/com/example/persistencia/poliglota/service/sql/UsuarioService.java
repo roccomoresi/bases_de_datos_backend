@@ -2,6 +2,9 @@ package com.example.persistencia.poliglota.service.sql;
 
 import com.example.persistencia.poliglota.model.sql.Usuario;
 import com.example.persistencia.poliglota.repository.sql.UsuarioRepository;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,8 +26,11 @@ public class UsuarioService {
         return repository.findById(id);
     }
 
+    @Transactional
     public Usuario save(Usuario usuario) {
-        return repository.save(usuario);
+        Usuario saved = repository.save(usuario);
+        repository.flush(); // 👈 fuerza escritura inmediata en la BD
+        return saved;
     }
 
     public void delete(Integer id) {
