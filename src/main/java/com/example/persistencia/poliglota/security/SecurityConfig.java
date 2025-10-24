@@ -43,6 +43,7 @@ public class SecurityConfig {
                 // -------- Cassandra --------
                 .requestMatchers("/api/cassandra/sensores/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
                 .requestMatchers("/api/mongo/alertas").permitAll()
+                .requestMatchers("/api/cassandra/mediciones/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
 
 
                 // -------- Monitoreo --------
