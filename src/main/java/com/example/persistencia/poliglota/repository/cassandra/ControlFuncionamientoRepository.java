@@ -11,6 +11,7 @@ import java.util.UUID;
 @Repository
 public interface ControlFuncionamientoRepository extends CassandraRepository<ControlFuncionamiento, UUID> {
 
+    // Devuelve todos los controles del sensor ordenados (ya está DESC en el modelo)
     @Query("SELECT * FROM controles_por_sensor WHERE sensor_id = ?0")
     List<ControlFuncionamiento> findBySensorId(UUID sensorId);
 }
