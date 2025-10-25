@@ -78,6 +78,9 @@ public class AlertaService {
         };
     }
 
+    // ---------------------------------------------------------------------
+    // 🔍 OPERACIONES BÁSICAS
+    // ---------------------------------------------------------------------
     public List<Alerta> listar() {
         return repository.findAll();
     }
@@ -112,21 +115,38 @@ public class AlertaService {
         return cantidad;
     }
 
-
-        // ---------------------------------------------------------------------
+    // ---------------------------------------------------------------------
     // 🧹 ELIMINAR ALERTAS DEMO
     // ---------------------------------------------------------------------
     public int eliminarAlertasDemo() {
-    List<Alerta> demo = repository.findAll().stream()
-            .filter(a -> {
-                Object flag = a.getDetalles().get("demo");
-                return flag != null && Boolean.parseBoolean(flag.toString());
-            })
-            .toList();
+        List<Alerta> demo = repository.findAll().stream()
+                .filter(a -> {
+                    Object flag = a.getDetalles().get("demo");
+                    return flag != null && Boolean.parseBoolean(flag.toString());
+                })
+                .toList();
 
-    repository.deleteAll(demo);
-    return demo.size();
-}
+        repository.deleteAll(demo);
+        return demo.size();
+    }
 
+    // ---------------------------------------------------------------------
+    // 🔎 FILTRO FLEXIBLE
+    // ---------------------------------------------------------------------
+    public List<Alerta> filtrar(String tipo, String severidad, String ciudad, String pais) {
+        // Si usás la versión con @Query en el repo:
+        // return repository.filtrarAlertas(tipo, severidad, ciudad, pais);
 
+        // 🔹 Si preferís hacerlo en memoria (seguro y funciona ya mismo):
+        List<Alerta> todas = repository.findAll();
+
+        return todas.stream()
+                .filter(a -> tipo == null || a.getTipo().equalsIgnoreCase(tipo))
+                .filter(a -> severidad == null || a.getSeveridad().equalsIgnoreCase(severidad))
+                .filter(a -> ciudad == null ||
+                        (a.getCiudad() != null && a.getCiudad().equalsIgnoreCase(ciudad)))
+                .filter(a -> pais == null ||
+                        (a.getPais() != null && a.getPais().equalsIgnoreCase(pais)))
+                .toList();
+    }
 }

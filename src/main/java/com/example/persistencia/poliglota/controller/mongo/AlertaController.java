@@ -117,4 +117,25 @@ public class AlertaController {
                     .body(Map.of("error", "No se encontró la alerta con el ID especificado"));
         }
     }
+
+    // -----------------------------------------------------------------------
+// 🎯 FILTRAR ALERTAS DINÁMICAMENTE
+// Ejemplo:
+// /api/mongo/alertas/filtrar?tipo=climatica&severidad=critica&ciudad=Rosario&pais=Argentina
+// Todos los parámetros son opcionales.
+// -----------------------------------------------------------------------
+@GetMapping("/filtrar")
+public ResponseEntity<List<Alerta>> filtrarAlertas(
+        @RequestParam(required = false) String tipo,
+        @RequestParam(required = false) String severidad,
+        @RequestParam(required = false) String ciudad,
+        @RequestParam(required = false) String pais
+) {
+    List<Alerta> alertas = service.filtrar(tipo, severidad, ciudad, pais);
+    if (alertas.isEmpty()) {
+        return ResponseEntity.noContent().build();
+    }
+    return ResponseEntity.ok(alertas);
+}
+
 }
