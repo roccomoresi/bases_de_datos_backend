@@ -2,12 +2,14 @@ package com.example.persistencia.poliglota.model.sql;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Data
 @Table(name = "sesion")
 public class Sesion {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idSesion;
@@ -16,14 +18,25 @@ public class Sesion {
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
-    private String rol;
     private LocalDateTime fechaInicio = LocalDateTime.now();
-    private LocalDateTime fechaCierre;
 
-    @Enumerated(EnumType.STRING)
-    private EstadoSesion estadoActual = EstadoSesion.activa;
+    private String rol; // 👈 Campo para guardar el rol textual (ADMIN, USUARIO, etc.)
 
-    public enum EstadoSesion {
-        activa, inactiva
+    // 🔹 Métodos explícitos (por si Lombok falla)
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public void setRol(String rol) {
+        this.rol = rol;
+    }
+
+    public String getRol() {
+        return rol;
     }
 }
+

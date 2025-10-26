@@ -20,7 +20,7 @@ public class FacturaService {
     }
 
     public List<Factura> getByUsuario(Integer usuarioId) {
-        return repository.findByUsuarioIdUsuario(usuarioId);
+        return repository.findByUsuario_IdUsuario(usuarioId);
     }
 
     public Optional<Factura> getById(Integer id) {

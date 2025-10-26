@@ -1,28 +1,56 @@
 package com.example.persistencia.poliglota.model.sql;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import java.time.LocalDateTime;
+import com.example.persistencia.poliglota.model.sql.Usuario;
+ 
 
 @Entity
-@Data
 @Table(name = "factura")
 public class Factura {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idFactura;
 
+    private Double monto;
+    private LocalDateTime fechaEmision = LocalDateTime.now();
+
+    // 👇 Relación con la tabla usuario
     @ManyToOne
-    @JoinColumn(name = "usuario_id")
+    @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
 
-    private LocalDateTime fechaEmision = LocalDateTime.now();
-    private Double total = 0.0;
+    // Getters y Setters
+    public Integer getIdFactura() {
+        return idFactura;
+    }
 
-    @Enumerated(EnumType.STRING)
-    private EstadoFactura estado = EstadoFactura.pendiente;
+    public void setIdFactura(Integer idFactura) {
+        this.idFactura = idFactura;
+    }
 
-    public enum EstadoFactura {
-        pendiente, pagada, vencida
+    public Double getMonto() {
+        return monto;
+    }
+
+    public void setMonto(Double monto) {
+        this.monto = monto;
+    }
+
+    public LocalDateTime getFechaEmision() {
+        return fechaEmision;
+    }
+
+    public void setFechaEmision(LocalDateTime fechaEmision) {
+        this.fechaEmision = fechaEmision;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
     }
 }

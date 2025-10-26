@@ -1,12 +1,9 @@
 package com.example.persistencia.poliglota.model.sql;
 
 import jakarta.persistence.*;
-import lombok.Data;
-
 import java.time.LocalDateTime;
 
 @Entity
-@Data
 @Table(name = "usuario")
 public class Usuario {
 
@@ -28,9 +25,30 @@ public class Usuario {
     @JoinColumn(name = "rol_id")
     private Rol rol;
 
-public enum EstadoUsuario {
-    ACTIVO,
-    INACTIVO
-}
+    public enum EstadoUsuario {
+        ACTIVO,
+        INACTIVO
+    }
 
+    // Getters y Setters manuales
+    public Integer getIdUsuario() { return idUsuario; }
+    public void setIdUsuario(Integer idUsuario) { this.idUsuario = idUsuario; }
+
+    public String getNombreCompleto() { return nombreCompleto; }
+    public void setNombreCompleto(String nombreCompleto) { this.nombreCompleto = nombreCompleto; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getContrasena() { return contrasena; }
+    public void setContrasena(String contrasena) { this.contrasena = contrasena; }
+
+    public EstadoUsuario getEstado() { return estado; }
+    public void setEstado(EstadoUsuario estado) { this.estado = estado; }
+
+    public LocalDateTime getFechaRegistro() { return fechaRegistro; }
+    public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }
+
+    public Rol getRol() { return rol; }
+    public void setRol(Rol rol) { this.rol = rol; }
 }
