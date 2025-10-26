@@ -3,6 +3,8 @@ package com.example.persistencia.poliglota.model.sql;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 @Entity
 @Table(name = "usuario")
 public class Usuario {
@@ -19,7 +21,10 @@ public class Usuario {
     @Column(name = "estado", nullable = false, length = 20)
     private EstadoUsuario estado = EstadoUsuario.ACTIVO;
 
-    private LocalDateTime fechaRegistro = LocalDateTime.now();
+    @CreationTimestamp
+    @Column(name = "fecha_registro", updatable = false)
+    private LocalDateTime fechaRegistro;
+    
 
     @ManyToOne
     @JoinColumn(name = "rol_id")

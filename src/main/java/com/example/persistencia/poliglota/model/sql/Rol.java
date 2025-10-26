@@ -19,4 +19,30 @@ public class Rol {
     private String descripcion; // Ej: "ADMIN", "TECNICO", "USUARIO"
 
 
+/*
+     * 📌 Lombok @Data genera automáticamente:
+     * ----------------------------------------
+     * public Integer getIdRol() {
+     *     return idRol;
+     * }
+     *
+     * public void setIdRol(Integer idRol) {
+     *     this.idRol = idRol;
+     * }
+     *
+     * public String getDescripcion() {
+     *     return descripcion;
+     * }
+     *
+     * public void setDescripcion(String descripcion) {
+     *     this.descripcion = descripcion;
+     * }
+     *
+     * Además, incluye:
+     *  - toString()
+     *  - equals() y hashCode()
+     *  - constructor por defecto
+     */
+
+
 }

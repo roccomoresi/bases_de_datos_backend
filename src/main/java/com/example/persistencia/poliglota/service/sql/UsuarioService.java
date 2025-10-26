@@ -8,6 +8,7 @@ import com.example.persistencia.poliglota.repository.sql.UsuarioRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,6 +59,7 @@ public class UsuarioService {
             usuario.setRol(rolDefault);
         }
 
+        usuario.setFechaRegistro(LocalDateTime.now());
         usuario.setEstado(EstadoUsuario.ACTIVO);
         return usuarioRepository.save(usuario);
     }

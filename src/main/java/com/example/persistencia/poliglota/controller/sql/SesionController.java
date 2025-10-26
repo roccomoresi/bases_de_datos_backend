@@ -2,6 +2,8 @@ package com.example.persistencia.poliglota.controller.sql;
 
 import com.example.persistencia.poliglota.model.sql.Sesion;
 import com.example.persistencia.poliglota.service.sql.SesionService;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +17,13 @@ public class SesionController {
     public SesionController(SesionService service) {
         this.service = service;
     }
+
+            @GetMapping("/usuarios/{id}/sesiones")
+        public ResponseEntity<List<Sesion>> obtenerHistorial(@PathVariable Integer id) {
+            List<Sesion> sesiones = service.obtenerHistorialSesiones(id);
+            return ResponseEntity.ok(sesiones);
+        }
+
 
     @GetMapping
     public List<Sesion> getAll() {

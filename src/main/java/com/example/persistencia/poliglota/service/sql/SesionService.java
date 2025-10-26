@@ -14,6 +14,11 @@ public class SesionService {
         this.repository = repository;
     }
 
+    public List<Sesion> obtenerHistorialSesiones(Integer usuarioId) {
+    return repository.findByUsuario_IdUsuario(usuarioId);
+}
+
+
     public List<Sesion> getAll() {
         return repository.findAll();
     }
