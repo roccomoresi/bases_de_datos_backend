@@ -5,8 +5,10 @@ import com.example.persistencia.poliglota.dto.AuthResponse;
 import com.example.persistencia.poliglota.dto.LoginRequest;
 import com.example.persistencia.poliglota.model.sql.CuentaCorriente;
 import com.example.persistencia.poliglota.model.sql.Rol;
+import com.example.persistencia.poliglota.model.sql.Sesion;
 import com.example.persistencia.poliglota.model.sql.Usuario;
 import com.example.persistencia.poliglota.service.sql.RolService;
+import com.example.persistencia.poliglota.service.sql.SesionService;
 import com.example.persistencia.poliglota.service.sql.UsuarioService;
 import com.example.persistencia.poliglota.service.sql.CuentaCorrienteService;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ public class AuthController {
     private final JwtService jwtService;
     @Autowired
     private final PasswordEncoder encoder;
+    private final SesionService sesionService;
 
 
     public AuthController(
@@ -36,13 +39,15 @@ public class AuthController {
             RolService rolService,
             CuentaCorrienteService cuentaCorrienteService,
             JwtService jwtService,
-            PasswordEncoder encoder
+            PasswordEncoder encoder,
+            SesionService sesionService
     ) {
         this.usuarioService = usuarioService;
         this.rolService = rolService;
         this.cuentaCorrienteService = cuentaCorrienteService;
         this.jwtService = jwtService;
         this.encoder = encoder;
+        this.sesionService = sesionService;
     }
 
     /* ───────────────────────────────
@@ -59,7 +64,11 @@ public class AuthController {
             return ResponseEntity.status(401).body("Email no registrado");
         }
 
+        
+
         Usuario u = opt.get();
+
+        Sesion sesion = sesionService.registrarInicioSesion(u.getIdUsuario());
 
         boolean passwordOk;
 
@@ -95,6 +104,22 @@ public class AuthController {
 
         return ResponseEntity.ok(new AuthResponse(token, u));
     }
+
+    /* ───────────────────────────────
+   🚪 LOGOUT
+─────────────────────────────── */
+@PutMapping("/logout/{idSesion}")
+public ResponseEntity<String> logout(@PathVariable Integer idSesion) {
+    try {
+        sesionService.cerrarSesion(idSesion);
+        log.info("🚪 Sesión cerrada correctamente (ID: {})", idSesion);
+        return ResponseEntity.ok("Sesión cerrada correctamente");
+    } catch (Exception e) {
+        log.error("❌ Error al cerrar sesión: {}", e.getMessage());
+        return ResponseEntity.status(500).body("Error al cerrar la sesión");
+    }
+}
+
 
     /* ───────────────────────────────
        🧾 REGISTER
