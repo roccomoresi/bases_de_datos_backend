@@ -1,4 +1,4 @@
-package com.example.persistencia.poliglota.security;
+package com.example.persistencia.poliglota.config.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,9 +15,9 @@ import org.springframework.security.config.Customizer;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtFilter;
+    private final JwtAuthFilter jwtFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtFilter) {
+    public SecurityConfig(JwtAuthFilter jwtFilter) {
         this.jwtFilter = jwtFilter;
     }
 
@@ -64,7 +64,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+public PasswordEncoder passwordEncoder() {
+    return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+}
+
 }

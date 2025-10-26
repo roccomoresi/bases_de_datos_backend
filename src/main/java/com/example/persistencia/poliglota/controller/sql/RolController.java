@@ -2,32 +2,72 @@ package com.example.persistencia.poliglota.controller.sql;
 
 import com.example.persistencia.poliglota.model.sql.Rol;
 import com.example.persistencia.poliglota.service.sql.RolService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/sql/roles")
+@Slf4j
 public class RolController {
 
-    private final RolService service;
+    private final RolService rolService;
 
-    public RolController(RolService service) {
-        this.service = service;
+    public RolController(RolService rolService) {
+        this.rolService = rolService;
     }
 
+    /* ───────────────────────────────
+       📋 LISTAR TODOS
+    ─────────────────────────────── */
     @GetMapping
-    public List<Rol> getAll() {
-        return service.getAll();
+    public ResponseEntity<List<Rol>> listarRoles() {
+        log.info("📋 GET /api/sql/roles");
+        return ResponseEntity.ok(rolService.listarTodos());
     }
 
+    /* ───────────────────────────────
+       🆕 CREAR ROL
+    ─────────────────────────────── */
     @PostMapping
-    public Rol create(@RequestBody Rol rol) {
-        return service.save(rol);
+    public ResponseEntity<?> crearRol(@RequestBody Rol rol) {
+        try {
+            Rol nuevo = rolService.crearRol(rol);
+            return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
+        } catch (Exception e) {
+            log.error("❌ Error al crear rol: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
+    /* ───────────────────────────────
+       ✏️ ACTUALIZAR ROL
+    ─────────────────────────────── */
+    @PutMapping("/{id}")
+    public ResponseEntity<?> actualizarRol(@PathVariable Integer id, @RequestBody Rol rol) {
+        try {
+            Rol actualizado = rolService.actualizarRol(id, rol);
+            return ResponseEntity.ok(actualizado);
+        } catch (Exception e) {
+            log.error("❌ Error al actualizar rol: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    /* ───────────────────────────────
+       ❌ ELIMINAR ROL
+    ─────────────────────────────── */
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Integer id) {
-        service.delete(id);
+    public ResponseEntity<?> eliminarRol(@PathVariable Integer id) {
+        try {
+            rolService.eliminarRol(id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            log.error("❌ Error al eliminar rol: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 }

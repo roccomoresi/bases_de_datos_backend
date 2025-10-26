@@ -255,6 +255,14 @@ Esto demuestra la **tolerancia a fallos y escalabilidad** del enfoque poliglota.
 * Postman (para probar endpoints)
 
 ---
+ADMIN
+admin@test.com - 1234
+
+TECNICO
+carlos@test.com - 1234
+
+USUARIO
+rocio@test.com - 1234
 
 
 ---

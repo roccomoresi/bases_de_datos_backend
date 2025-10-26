@@ -1,14 +1,17 @@
 package com.example.persistencia.poliglota.controller.sql;
 
+import com.example.persistencia.poliglota.config.security.JwtService;
 import com.example.persistencia.poliglota.dto.AuthResponse;
 import com.example.persistencia.poliglota.dto.LoginRequest;
 import com.example.persistencia.poliglota.model.sql.CuentaCorriente;
 import com.example.persistencia.poliglota.model.sql.Rol;
 import com.example.persistencia.poliglota.model.sql.Usuario;
-import com.example.persistencia.poliglota.security.JwtService;
-import com.example.persistencia.poliglota.service.sql.CuentaCorrienteService;
 import com.example.persistencia.poliglota.service.sql.RolService;
 import com.example.persistencia.poliglota.service.sql.UsuarioService;
+import com.example.persistencia.poliglota.service.sql.CuentaCorrienteService;
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -17,13 +20,16 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/auth")
+@Slf4j
 public class AuthController {
 
     private final UsuarioService usuarioService;
     private final RolService rolService;
     private final CuentaCorrienteService cuentaCorrienteService;
     private final JwtService jwtService;
-    private final PasswordEncoder encoder; // si aún no usás BCrypt, lo podemos saltear
+    @Autowired
+    private final PasswordEncoder encoder;
+
 
     public AuthController(
             UsuarioService usuarioService,
@@ -39,71 +45,95 @@ public class AuthController {
         this.encoder = encoder;
     }
 
-    // LOGIN: recibe JSON {email, password} y devuelve {token, usuario}
+    /* ───────────────────────────────
+       🔐 LOGIN
+    ─────────────────────────────── */
     @PostMapping("/login")
-public ResponseEntity<?> login(@RequestBody LoginRequest req) {
-    Optional<Usuario> opt = usuarioService.findByEmail(req.getEmail());
-    if (!opt.isPresent())
-        return ResponseEntity.status(401).body("Email no registrado");
+    public ResponseEntity<?> login(@RequestBody LoginRequest req) {
+        
+            System.out.println("🟡 Email recibido: " + req.getEmail());
+            System.out.println("🟡 Password recibido: " + req.getPassword());
 
-    Usuario u = opt.get();
+        Optional<Usuario> opt = usuarioService.buscarPorEmail(req.getEmail());
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(401).body("Email no registrado");
+        }
 
-    // Si todavía guardás contraseñas planas, usá equals; si migrás a BCrypt, usá encoder.matches()
-    boolean passwordOk;
-    if (u.getContrasena() != null && (
-            u.getContrasena().startsWith("$2a$") ||
-            u.getContrasena().startsWith("$2b$") ||
-            u.getContrasena().startsWith("$2y$")
-    )) {
-        passwordOk = encoder.matches(req.getPassword(), u.getContrasena());
-    } else {
-        passwordOk = Objects.equals(req.getPassword(), u.getContrasena());
+        Usuario u = opt.get();
+
+        boolean passwordOk;
+
+
+
+
+        if (u.getContrasena() != null && (
+                u.getContrasena().startsWith("$2a$") ||
+                u.getContrasena().startsWith("$2b$") ||
+                u.getContrasena().startsWith("$2y$")
+        )) {
+            // BCrypt
+            passwordOk = encoder.matches(req.getPassword(), u.getContrasena());
+        } else {
+            // Contraseña plana
+            passwordOk = Objects.equals(req.getPassword(), u.getContrasena());
+        }
+
+        if (!passwordOk) {
+            return ResponseEntity.status(401).body("Contraseña incorrecta");
+        }
+
+        // Normalizamos el rol
+        String rolDesc = (u.getRol() != null ? u.getRol().getDescripcion() : "USUARIO");
+        String springRole = switch (rolDesc.trim().toUpperCase()) {
+            case "ADMIN" -> "ROLE_ADMIN";
+            case "TECNICO" -> "ROLE_TECNICO";
+            default -> "ROLE_USUARIO";
+        };
+
+        // Generamos el token JWT
+        String token = jwtService.generarToken(u.getEmail(), springRole);
+
+        return ResponseEntity.ok(new AuthResponse(token, u));
     }
 
-    if (!passwordOk)
-        return ResponseEntity.status(401).body("Contraseña incorrecta");
+    /* ───────────────────────────────
+       🧾 REGISTER
+    ─────────────────────────────── */
+    @PostMapping("/register")
+public ResponseEntity<?> register(@RequestBody Usuario nuevo) {
+    log.info("🆕 Registro de nuevo usuario: {}", nuevo.getEmail());
 
-    // Normalizamos el rol
-    String rolDesc = (u.getRol() != null ? u.getRol().getDescripcion() : "USUARIO");
-    String springRole = rolDesc == null ? "ROLE_USUARIO" :
-            (rolDesc.trim().toUpperCase().startsWith("ADMIN") ? "ROLE_ADMIN" :
-             rolDesc.trim().toUpperCase().startsWith("TEC")   ? "ROLE_TECNICO" :
-                                                                 "ROLE_USUARIO");
+    if (usuarioService.buscarPorEmail(nuevo.getEmail()).isPresent()) {
+        return ResponseEntity.status(409).body("El email ya está registrado");
+    }
 
-    // Generamos el token JWT
-    String token = jwtService.generarToken(u.getEmail(), springRole);
+    // 🧠 Si no se envía rol, usamos USUARIO por defecto
+    Rol rolAsignado;
+    if (nuevo.getRol() == null || nuevo.getRol().getIdRol() == null) {
+        rolAsignado = rolService.buscarPorDescripcion("USUARIO")
+                .orElseThrow(() -> new RuntimeException("No se encontró el rol USUARIO"));
+    } else {
+        rolAsignado = rolService.buscarPorId(nuevo.getRol().getIdRol())
+                .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+    }
+    nuevo.setRol(rolAsignado);
 
-    // Devolvemos el token y el usuario
-    return ResponseEntity.ok(new AuthResponse(token, u));
+    // 🔐 Encriptamos contraseña
+    nuevo.setContrasena(encoder.encode(nuevo.getContrasena()));
+
+    // 🧱 Guardamos usuario
+    Usuario creado = usuarioService.crearUsuario(nuevo);
+
+    // 💰 Trigger SQL crea la cuenta corriente automáticamente
+
+    // 🎟️ Generamos token con el rol correcto
+    String token = jwtService.generarToken(
+            creado.getEmail(),
+            "ROLE_" + creado.getRol().getDescripcion().toUpperCase()
+    );
+
+    return ResponseEntity.ok(new AuthResponse(token, creado));
 }
 
 
-    // REGISTER: recibe Usuario (JSON) y crea rol por defecto + cuenta corriente
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody Usuario nuevo) {
-        if (usuarioService.findByEmail(nuevo.getEmail()).isPresent()) {
-            return ResponseEntity.status(409).body("El email ya está registrado");
-        }
-
-        // rol por defecto: "usuario"
-        Rol rolUsuario = rolService.getByDescripcion("usuario");
-        nuevo.setRol(rolUsuario);
-
-        // si querés migrar a BCrypt:
-        // nuevo.setContrasena(encoder.encode(nuevo.getContrasena()));
-
-        Usuario creado = usuarioService.save(nuevo);
-
-        CuentaCorriente cc = new CuentaCorriente();
-        cc.setUsuario(creado);
-        cc.setSaldoActual(0.0);
-        cuentaCorrienteService.save(cc);
-
-        // opcional: devolver token post-registro
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("role", "ROLE_USUARIO");
-        String token = jwtService.generarToken(creado.getEmail(), "ROLE_USUARIO");
-
-        return ResponseEntity.ok(new AuthResponse(token, creado));
-    }
 }

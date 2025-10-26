@@ -1,4 +1,4 @@
-package com.example.persistencia.poliglota.security;
+package com.example.persistencia.poliglota.config.security;
 
 import com.example.persistencia.poliglota.model.sql.Usuario;
 import com.example.persistencia.poliglota.repository.sql.UsuarioRepository;
