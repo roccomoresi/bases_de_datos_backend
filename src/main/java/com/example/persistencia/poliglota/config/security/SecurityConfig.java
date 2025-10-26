@@ -28,8 +28,9 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults()) // ✅ habilita CORS real
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Endpoints públicos (auth)
+                // ✅ Endpoints públicos
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/api/sql/usuarios/register", "/api/sql/usuarios/login").permitAll()
 
                 // -------- SQL (facturación / usuarios) --------
                 .requestMatchers("/api/sql/usuarios/**").hasAuthority("ROLE_ADMIN")
@@ -45,7 +46,6 @@ public class SecurityConfig {
                 .requestMatchers("/api/mongo/alertas").permitAll()
                 .requestMatchers("/api/cassandra/mediciones/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
                 .requestMatchers("/api/cassandra/funcionamiento").permitAll()
-
 
                 // -------- Monitoreo --------
                 .requestMatchers("/api/monitoreo/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
