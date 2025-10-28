@@ -3,7 +3,9 @@ package com.example.persistencia.poliglota.model.sql;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Entity
 @Data
 @Table(name = "pago")

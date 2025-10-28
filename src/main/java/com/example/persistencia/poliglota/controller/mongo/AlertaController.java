@@ -138,4 +138,61 @@ public ResponseEntity<List<Alerta>> filtrarAlertas(
     return ResponseEntity.ok(alertas);
 }
 
+// -----------------------------------------------------------------------
+// 🌐 ALERTAS GLOBALES (Mongo + Cassandra)
+// Combina las alertas de Mongo con la última medición de Cassandra
+// -----------------------------------------------------------------------
+@GetMapping("/global")
+public ResponseEntity<List<Map<String, Object>>> getAlertasGlobales() {
+    List<Map<String, Object>> resultado = new ArrayList<>();
+
+    try {
+        // ✅ Obtenemos todas las alertas
+        List<Alerta> alertas = service.listar();
+
+        for (Alerta alerta : alertas) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("sensorId", alerta.getSensorId());
+            item.put("ciudad", alerta.getCiudad());
+            item.put("pais", alerta.getPais());
+            item.put("descripcion", alerta.getDescripcion());
+            item.put("severidad", alerta.getSeveridad());
+            item.put("fechaAlerta", alerta.getFecha());
+            item.put("fuente", alerta.getFuente());
+            item.put("estado", alerta.getEstado());
+
+            // ⚙️ Consultamos Cassandra (vía HTTP) para obtener la última medición del sensor
+            try {
+                var restTemplate = new org.springframework.web.client.RestTemplate();
+                var url = "http://localhost:8080/api/cassandra/mediciones/sensor/" + alerta.getSensorId();
+                var response = restTemplate.getForEntity(url, List.class);
+
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && !response.getBody().isEmpty()) {
+                    // Tomamos la última medición
+                    List<?> mediciones = response.getBody();
+                    item.put("ultimaMedicion", mediciones.get(mediciones.size() - 1));
+                }
+            } catch (Exception e) {
+                item.put("ultimaMedicion", "No disponible");
+            }
+
+            resultado.add(item);
+        }
+
+        return ResponseEntity.ok(resultado);
+
+    } catch (Exception e) {
+        Map<String, Object> error = Map.of(
+                "error", "No se pudieron combinar las alertas con las mediciones",
+                "detalle", e.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(List.of(error));
+    }
+}
+@GetMapping("/resueltas")
+public ResponseEntity<List<Alerta>> getResueltas() {
+    return ResponseEntity.ok(service.listarResueltas());
+}
+
 }

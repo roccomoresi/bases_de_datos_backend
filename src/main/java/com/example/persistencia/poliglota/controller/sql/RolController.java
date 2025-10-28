@@ -2,16 +2,16 @@ package com.example.persistencia.poliglota.controller.sql;
 
 import com.example.persistencia.poliglota.model.sql.Rol;
 import com.example.persistencia.poliglota.service.sql.RolService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/sql/roles")
-@Slf4j
 public class RolController {
 
     private final RolService rolService;

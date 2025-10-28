@@ -2,14 +2,15 @@ package com.example.persistencia.poliglota.service.sql;
 
 import com.example.persistencia.poliglota.model.sql.Rol;
 import com.example.persistencia.poliglota.repository.sql.RolRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 
-@Service
 @Slf4j
+@Service
+
 public class RolService {
 
     private final RolRepository rolRepository;

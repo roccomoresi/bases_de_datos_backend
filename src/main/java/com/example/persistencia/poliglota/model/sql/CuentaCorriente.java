@@ -2,7 +2,9 @@ package com.example.persistencia.poliglota.model.sql;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Entity
 @Data
 @Table(name = "cuenta_corriente")

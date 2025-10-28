@@ -3,7 +3,9 @@ package com.example.persistencia.poliglota.model.sql;
 import jakarta.persistence.*;
 import java.util.List;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Entity
 @Table(name = "grupos")
 public class Grupo {

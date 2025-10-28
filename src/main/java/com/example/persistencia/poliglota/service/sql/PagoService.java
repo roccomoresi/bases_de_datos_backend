@@ -5,7 +5,9 @@ import com.example.persistencia.poliglota.repository.sql.PagoRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class PagoService {
     private final PagoRepository repository;

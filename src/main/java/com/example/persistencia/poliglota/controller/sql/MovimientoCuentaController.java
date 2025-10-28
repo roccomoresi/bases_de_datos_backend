@@ -5,7 +5,9 @@ import com.example.persistencia.poliglota.service.sql.MovimientoCuentaService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/sql/movimientos")
 public class MovimientoCuentaController {
