@@ -4,6 +4,7 @@ spring:
     username: root
     password: root123
     driver-class-name: com.mysql.cj.jdbc.Driver
+    
 
   jpa:
     hibernate:
@@ -35,3 +36,6 @@ springdoc:
 # 🔐 JWT config (fuera del bloque spring)
 jwt:
   secret: "MiClaveSuperLargaYSeguraParaJWTde256bits!123456"
+
+
+

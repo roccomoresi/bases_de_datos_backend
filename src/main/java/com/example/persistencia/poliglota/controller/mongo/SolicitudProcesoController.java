@@ -13,12 +13,14 @@ import java.util.UUID;
 public class SolicitudProcesoController {
 
     private final SolicitudProcesoService service;
-    
 
     public SolicitudProcesoController(SolicitudProcesoService service) {
         this.service = service;
     }
 
+    /* ───────────────────────────────────────────────
+       🔹 LISTAR SOLICITUDES
+    ─────────────────────────────────────────────── */
     @GetMapping
     public ResponseEntity<List<SolicitudProceso>> getAll() {
         return ResponseEntity.ok(service.getAll());
@@ -41,33 +43,42 @@ public class SolicitudProcesoController {
         return ResponseEntity.ok(service.getByEstado(estado));
     }
 
+    /* ───────────────────────────────────────────────
+       🟢 CREAR NUEVA SOLICITUD
+    ─────────────────────────────────────────────── */
     @PostMapping
     public ResponseEntity<SolicitudProceso> create(
-            @RequestParam UUID usuarioId,
+            @RequestParam Integer usuarioId,
             @RequestParam UUID procesoId
     ) {
         return ResponseEntity.ok(service.create(usuarioId, procesoId));
     }
 
-@PutMapping("/{id}/estado")
-public ResponseEntity<SolicitudProceso> updateEstado(
-        @PathVariable UUID id,
-        @RequestParam String nuevoEstado
-) {
-    return ResponseEntity.ok(service.updateEstado(id, nuevoEstado));
-}
+    /* ───────────────────────────────────────────────
+       🔄 ACTUALIZAR ESTADO
+    ─────────────────────────────────────────────── */
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<SolicitudProceso> updateEstado(
+            @PathVariable UUID id,
+            @RequestParam String estado
+    ) {
+        return ResponseEntity.ok(service.updateEstado(id, estado));
+    }
 
-
-
-
+    /* ───────────────────────────────────────────────
+       📝 AGREGAR RESULTADO
+    ─────────────────────────────────────────────── */
     @PutMapping("/{id}/resultado")
-    public ResponseEntity<SolicitudProceso> agregarResultado(
+    public ResponseEntity<SolicitudProceso> updateResultado(
             @PathVariable UUID id,
             @RequestParam String resultado
     ) {
-        return ResponseEntity.ok(service.agregarResultado(id, resultado));
+        return ResponseEntity.ok(service.updateResultado(id, resultado));
     }
 
+    /* ───────────────────────────────────────────────
+       ❌ ELIMINAR SOLICITUD
+    ─────────────────────────────────────────────── */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         service.delete(id);

@@ -12,14 +12,14 @@ public class SolicitudProceso {
 
     @Id
     private UUID id;
-    private UUID usuarioId; // viene del sistema principal (MySQL)
-    
+    private Integer usuarioId;
+
     @DBRef
-    private Proceso proceso; // referencia al documento de Mongo
-    
+    private Proceso proceso;
+
     private LocalDateTime fechaSolicitud;
-    private String estado; // "pendiente", "en_curso", "completado"
-    private String resultado; // opcional: resumen del resultado o mensaje final
+    private String estado;     // pendiente | en_curso | completado
+    private String resultado;  // opcional
 
     public SolicitudProceso() {
         this.id = UUID.randomUUID();
@@ -27,59 +27,28 @@ public class SolicitudProceso {
         this.estado = "pendiente";
     }
 
-    public SolicitudProceso(UUID usuarioId, Proceso proceso) {
-        this.id = UUID.randomUUID();
+    public SolicitudProceso(Integer usuarioId, Proceso proceso) {
+        this();
         this.usuarioId = usuarioId;
         this.proceso = proceso;
-        this.fechaSolicitud = LocalDateTime.now();
-        this.estado = "pendiente";
     }
 
-    public UUID getId() {
-        return id;
-    }
+    // Getters y Setters
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
+    public Integer getUsuarioId() { return usuarioId; }
+    public void setUsuarioId(Integer usuarioId) { this.usuarioId = usuarioId; }
 
-    public UUID getUsuarioId() {
-        return usuarioId;
-    }
+    public Proceso getProceso() { return proceso; }
+    public void setProceso(Proceso proceso) { this.proceso = proceso; }
 
-    public void setUsuarioId(UUID usuarioId) {
-        this.usuarioId = usuarioId;
-    }
+    public LocalDateTime getFechaSolicitud() { return fechaSolicitud; }
+    public void setFechaSolicitud(LocalDateTime fechaSolicitud) { this.fechaSolicitud = fechaSolicitud; }
 
-    public Proceso getProceso() {
-        return proceso;
-    }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 
-    public void setProceso(Proceso proceso) {
-        this.proceso = proceso;
-    }
-
-    public LocalDateTime getFechaSolicitud() {
-        return fechaSolicitud;
-    }
-
-    public void setFechaSolicitud(LocalDateTime fechaSolicitud) {
-        this.fechaSolicitud = fechaSolicitud;
-    }
-
-    public String getEstado() {
-        return estado;
-    }
-
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
-
-    public String getResultado() {
-        return resultado;
-    }
-
-    public void setResultado(String resultado) {
-        this.resultado = resultado;
-    }
+    public String getResultado() { return resultado; }
+    public void setResultado(String resultado) { this.resultado = resultado; }
 }

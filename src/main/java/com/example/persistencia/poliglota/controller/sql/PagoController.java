@@ -1,7 +1,11 @@
 package com.example.persistencia.poliglota.controller.sql;
 
+import com.example.persistencia.poliglota.model.sql.Factura;
 import com.example.persistencia.poliglota.model.sql.Pago;
+import com.example.persistencia.poliglota.model.sql.Pago.MetodoPago;
+import com.example.persistencia.poliglota.service.sql.FacturaService;
 import com.example.persistencia.poliglota.service.sql.PagoService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -10,29 +14,51 @@ import java.util.List;
 @RequestMapping("/api/sql/pagos")
 public class PagoController {
 
-    private final PagoService service;
+    private final PagoService pagoService;
+    private final FacturaService facturaService;
 
-    public PagoController(PagoService service) {
-        this.service = service;
+    public PagoController(PagoService pagoService, FacturaService facturaService) {
+        this.pagoService = pagoService;
+        this.facturaService = facturaService;
     }
 
+    /* ───────────────────────────────────────────────
+       📋 LISTAR PAGOS
+    ─────────────────────────────────────────────── */
     @GetMapping
-    public List<Pago> getAll() {
-        return service.getAll();
+    public ResponseEntity<List<Pago>> getAll() {
+        return ResponseEntity.ok(pagoService.getAll());
     }
 
     @GetMapping("/factura/{facturaId}")
-    public List<Pago> getByFactura(@PathVariable Integer facturaId) {
-        return service.getByFactura(facturaId);
+    public ResponseEntity<List<Pago>> getByFactura(@PathVariable Integer facturaId) {
+        return ResponseEntity.ok(pagoService.getByFactura(facturaId));
     }
 
-    @PostMapping
-    public Pago create(@RequestBody Pago pago) {
-        return service.save(pago);
+    /* ───────────────────────────────────────────────
+       💰 REGISTRAR NUEVO PAGO
+    ─────────────────────────────────────────────── */
+    @PostMapping("/registrar")
+    public ResponseEntity<Pago> registrarPago(
+            @RequestParam Integer facturaId,
+            @RequestParam Double monto,
+            @RequestParam(defaultValue = "efectivo") MetodoPago metodo
+    ) {
+        Factura factura = facturaService.getById(facturaId);
+        if (factura == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Pago nuevoPago = pagoService.registrarPago(factura, monto, metodo);
+        return ResponseEntity.ok(nuevoPago);
     }
 
+    /* ───────────────────────────────────────────────
+       🗑️ ELIMINAR PAGO
+    ─────────────────────────────────────────────── */
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Integer id) {
-        service.delete(id);
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        pagoService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

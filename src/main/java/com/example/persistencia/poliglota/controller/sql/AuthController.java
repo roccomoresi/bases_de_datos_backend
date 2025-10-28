@@ -55,9 +55,6 @@ public class AuthController {
     ─────────────────────────────── */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
-        
-            System.out.println("🟡 Email recibido: " + req.getEmail());
-            System.out.println("🟡 Password recibido: " + req.getPassword());
 
         Optional<Usuario> opt = usuarioService.buscarPorEmail(req.getEmail());
         if (opt.isEmpty()) {
