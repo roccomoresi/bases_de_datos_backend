@@ -160,6 +160,4 @@ public ResponseEntity<?> register(@RequestBody Usuario nuevo) {
 
     return ResponseEntity.ok(new AuthResponse(token, creado));
 }
-
-
 }
