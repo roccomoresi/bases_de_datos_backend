@@ -5,7 +5,9 @@ import com.example.persistencia.poliglota.service.sql.CuentaCorrienteService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/sql/cuentas")
 public class CuentaCorrienteController {

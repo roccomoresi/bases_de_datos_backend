@@ -8,7 +8,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class CuentaCorrienteService {
     private final CuentaCorrienteRepository repository;

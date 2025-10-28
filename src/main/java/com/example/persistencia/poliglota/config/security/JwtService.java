@@ -12,7 +12,9 @@ import java.util.Date;
 import java.util.function.Function;
 
 import javax.crypto.SecretKey;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class JwtService {
 

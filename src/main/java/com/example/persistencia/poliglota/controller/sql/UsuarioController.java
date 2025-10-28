@@ -4,17 +4,17 @@ import com.example.persistencia.poliglota.model.sql.Rol;
 import com.example.persistencia.poliglota.model.sql.Usuario;
 import com.example.persistencia.poliglota.service.sql.RolService;
 import com.example.persistencia.poliglota.service.sql.UsuarioService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/sql")
-@Slf4j
 public class UsuarioController {
 
     private final UsuarioService usuarioService;

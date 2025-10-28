@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 

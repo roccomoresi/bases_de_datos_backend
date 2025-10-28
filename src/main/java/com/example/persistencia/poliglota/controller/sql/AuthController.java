@@ -11,7 +11,6 @@ import com.example.persistencia.poliglota.service.sql.RolService;
 import com.example.persistencia.poliglota.service.sql.SesionService;
 import com.example.persistencia.poliglota.service.sql.UsuarioService;
 import com.example.persistencia.poliglota.service.sql.CuentaCorrienteService;
-import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +18,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 
 @RestController
 @RequestMapping("/auth")
-@Slf4j
 public class AuthController {
 
     private final UsuarioService usuarioService;
