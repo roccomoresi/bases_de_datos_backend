@@ -24,44 +24,47 @@ public class AlertaMongoClient {
         this.restTemplate = new RestTemplate();
     }
 
-    /**
-     * Envía una alerta climática o de sensor al módulo MongoDB.
-     */
-    public void enviarAlerta(UUID sensorId,
-                             String tipo,
-                             String descripcion,
-                             String ciudad,
-                             String pais,
-                             Double temperatura,
-                             Double humedad,
-                             String severidad) {
+    public void enviarAlerta(
+            UUID sensorId,
+            String tipo,
+            String descripcion,
+            String ciudad,
+            String pais,
+            Double temperatura,
+            Double humedad,
+            String severidad
+    ) {
         try {
-            // Construcción del objeto de alerta
+            // --- cuerpo.detalles ---
             Map<String, Object> detalles = new HashMap<>();
             if (temperatura != null) detalles.put("temperatura", temperatura);
             if (humedad != null) detalles.put("humedad", humedad);
             detalles.put("fuente", "cassandra");
             detalles.put("demo", false);
 
+            // --- cuerpo principal ---
             Map<String, Object> alerta = new HashMap<>();
             alerta.put("sensorId", sensorId != null ? sensorId.toString() : null);
-            alerta.put("tipo", tipo);
-            alerta.put("descripcion", descripcion);
+            alerta.put("tipo", tipo);                       // ej: "climatica"
+            alerta.put("descripcion", descripcion);         // mensaje
             alerta.put("ciudad", ciudad);
             alerta.put("pais", pais);
-            alerta.put("severidad", severidad);
+            alerta.put("severidad", severidad);             // ej: "alta", "media"
             alerta.put("estado", "activa");
-            alerta.put("fechaHora", Instant.now().toString());
+            alerta.put("fecha", Instant.now().toString());  // 👈 ahora se llama "fecha"
             alerta.put("fuente", "cassandra");
             alerta.put("detalles", detalles);
 
-            // Configurar cabeceras y request
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(alerta, headers);
 
-            // Enviar POST
-            ResponseEntity<String> response = restTemplate.postForEntity(ALERTAS_MONGO_URL, request, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    ALERTAS_MONGO_URL,
+                    request,
+                    String.class
+            );
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 log.info("✅ Alerta enviada correctamente a Mongo: [{}] {}", tipo, descripcion);
