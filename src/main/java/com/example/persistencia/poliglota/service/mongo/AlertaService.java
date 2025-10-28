@@ -149,4 +149,9 @@ public class AlertaService {
                         (a.getPais() != null && a.getPais().equalsIgnoreCase(pais)))
                 .toList();
     }
+
+    public List<Alerta> listarResueltas() {
+        return repository.findByEstado("resuelta");
+    }
+    
 }

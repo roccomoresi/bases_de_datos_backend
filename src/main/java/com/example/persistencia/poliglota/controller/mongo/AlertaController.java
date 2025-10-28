@@ -190,6 +190,9 @@ public ResponseEntity<List<Map<String, Object>>> getAlertasGlobales() {
                 .body(List.of(error));
     }
 }
-
+@GetMapping("/resueltas")
+public ResponseEntity<List<Alerta>> getResueltas() {
+    return ResponseEntity.ok(service.listarResueltas());
+}
 
 }
