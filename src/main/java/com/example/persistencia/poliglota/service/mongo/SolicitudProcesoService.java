@@ -7,6 +7,7 @@ import com.example.persistencia.poliglota.repository.mongo.ProcesoRepository;
 import com.example.persistencia.poliglota.repository.mongo.SolicitudProcesoRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,15 +19,17 @@ public class SolicitudProcesoService {
     private final ProcesoRepository procesoRepository;
     private final HistorialEjecucionService historialService;
 
-
-
-    public SolicitudProcesoService(SolicitudProcesoRepository repository, ProcesoRepository procesoRepository,
-            HistorialEjecucionService historialService) {
+    public SolicitudProcesoService(SolicitudProcesoRepository repository,
+                                   ProcesoRepository procesoRepository,
+                                   HistorialEjecucionService historialService) {
         this.repository = repository;
         this.procesoRepository = procesoRepository;
         this.historialService = historialService;
     }
 
+    /* ───────────────────────────────
+       📋 LISTAR Y BUSCAR
+    ─────────────────────────────── */
     public List<SolicitudProceso> getAll() {
         return repository.findAll();
     }
@@ -43,62 +46,70 @@ public class SolicitudProcesoService {
         return repository.findByEstadoIgnoreCase(estado);
     }
 
-    public SolicitudProceso create(UUID usuarioId, UUID procesoId) {
+    /* ───────────────────────────────
+       🟢 CREAR SOLICITUD
+    ─────────────────────────────── */
+    public SolicitudProceso create(Integer usuarioId, UUID procesoId) {
         Proceso proceso = procesoRepository.findById(procesoId)
                 .orElseThrow(() -> new RuntimeException("Proceso no encontrado"));
+
         SolicitudProceso solicitud = new SolicitudProceso(usuarioId, proceso);
         return repository.save(solicitud);
     }
 
-public SolicitudProceso updateEstado(UUID id, String nuevoEstado) {
-    SolicitudProceso solicitud = repository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+    /* ───────────────────────────────
+       🔄 ACTUALIZAR ESTADO
+    ─────────────────────────────── */
+    public SolicitudProceso updateEstado(UUID id, String estado) {
+        SolicitudProceso solicitud = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
 
-    solicitud.setEstado(nuevoEstado);
-    repository.save(solicitud);
+        solicitud.setEstado(estado);
+        repository.save(solicitud);
 
-    // 🔹 Si el proceso fue completado, registramos historial
-    if ("completado".equalsIgnoreCase(nuevoEstado)) {
-        HistorialEjecucion log = new HistorialEjecucion(
-                solicitud.getProceso().getId(),
-                solicitud.getProceso().getNombre(),
-                solicitud.getUsuarioId(),
-                solicitud.getFechaSolicitud(),
-                java.time.LocalDateTime.now(),
-                solicitud.getResultado()
-        );
-        historialService.save(log);
-        System.out.println("📜 Historial registrado para el proceso: " + solicitud.getProceso().getNombre());
-    }
-
-    return solicitud;
-}
-
-
-public SolicitudProceso agregarResultado(UUID id, String resultado) {
-    SolicitudProceso solicitud = repository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
-
-    solicitud.setResultado(resultado);
-    solicitud.setEstado("completado");
-    repository.save(solicitud);
-
-    // 🔹 Sincronizar resultado en historial (si existe un log reciente)
-    List<HistorialEjecucion> historial = historialService.getByProceso(solicitud.getProceso().getId());
-    if (!historial.isEmpty()) {
-        HistorialEjecucion ultimo = historial.get(historial.size() - 1);
-        // solo si el historial pertenece al mismo usuario
-        if (ultimo.getUsuarioId().equals(solicitud.getUsuarioId())) {
-            ultimo.setResultado(resultado);
-            historialService.save(ultimo);
-            System.out.println("📝 Resultado actualizado también en historial: " + resultado);
+        // Si el proceso se completó, registramos en el historial
+        if ("completado".equalsIgnoreCase(estado)) {
+            HistorialEjecucion log = new HistorialEjecucion(
+                    solicitud.getProceso().getId(),
+                    solicitud.getProceso().getNombre(),
+                    solicitud.getUsuarioId(),
+                    solicitud.getFechaSolicitud(),
+                    LocalDateTime.now(),
+                    solicitud.getResultado()
+            );
+            historialService.save(log);
         }
+
+        return solicitud;
     }
 
-    return solicitud;
-}
+    /* ───────────────────────────────
+       📝 AGREGAR RESULTADO
+    ─────────────────────────────── */
+    public SolicitudProceso updateResultado(UUID id, String resultado) {
+        SolicitudProceso solicitud = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
 
+        solicitud.setResultado(resultado);
+        solicitud.setEstado("completado");
+        repository.save(solicitud);
 
+        // Actualizar historial más reciente
+        List<HistorialEjecucion> historial = historialService.getByProceso(solicitud.getProceso().getId());
+        if (!historial.isEmpty()) {
+            HistorialEjecucion ultimo = historial.get(historial.size() - 1);
+            if (ultimo.getUsuarioId().equals(solicitud.getUsuarioId())) {
+                ultimo.setResultado(resultado);
+                historialService.save(ultimo);
+            }
+        }
+
+        return solicitud;
+    }
+
+    /* ───────────────────────────────
+       ❌ ELIMINAR
+    ─────────────────────────────── */
     public void delete(UUID id) {
         repository.deleteById(id);
     }

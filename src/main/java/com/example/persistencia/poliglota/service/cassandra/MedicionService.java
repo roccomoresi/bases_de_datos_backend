@@ -2,8 +2,10 @@ package com.example.persistencia.poliglota.service.cassandra;
 
 import com.example.persistencia.poliglota.model.cassandra.Medicion;
 import com.example.persistencia.poliglota.model.cassandra.MedicionPorCiudad;
+import com.example.persistencia.poliglota.model.cassandra.MedicionPorPais;
 import com.example.persistencia.poliglota.repository.cassandra.MedicionRepository;
 import com.example.persistencia.poliglota.repository.cassandra.MedicionPorCiudadRepository;
+import com.example.persistencia.poliglota.repository.cassandra.MedicionPorPaisRepository;
 import com.example.persistencia.poliglota.service.intergracion.AlertaMongoClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,15 +25,18 @@ public class MedicionService {
 
     private final MedicionRepository medicionRepository;
     private final MedicionPorCiudadRepository medicionPorCiudadRepository;
+    private final MedicionPorPaisRepository medicionPorPaisRepository;
     private final AlertaMongoClient alertaMongoClient;
 
     public MedicionService(
             MedicionRepository medicionRepository,
             MedicionPorCiudadRepository medicionPorCiudadRepository,
+            MedicionPorPaisRepository medicionPorPaisRepository,
             AlertaMongoClient alertaMongoClient
     ) {
         this.medicionRepository = medicionRepository;
         this.medicionPorCiudadRepository = medicionPorCiudadRepository;
+        this.medicionPorPaisRepository = medicionPorPaisRepository;
         this.alertaMongoClient = alertaMongoClient;
     }
 
@@ -88,7 +93,7 @@ public Medicion guardar(Medicion medicion) {
         // ✅ Asignar la fecha calculada al objeto antes de guardar
         medicion.setFechaMedicion(fechaFinal);
 
-        // 🧱 Guarda en la tabla desnormalizada
+        // 🧱 Guarda en la tabla desnormalizada por ciudad
         MedicionPorCiudad medicionCiudad = new MedicionPorCiudad(
             medicion.getCiudad(),
             medicion.getPais(),
@@ -98,6 +103,17 @@ public Medicion guardar(Medicion medicion) {
             medicion.getHumedad()
         );
         medicionPorCiudadRepository.save(medicionCiudad);
+
+        // 🧱 Guarda en la tabla desnormalizada por país
+        MedicionPorPais medicionPais = new MedicionPorPais(
+            medicion.getPais(),
+            fechaFinal,
+            medicion.getCiudad(),
+            medicion.getSensorId(),
+            medicion.getTemperatura(),
+            medicion.getHumedad()
+        );
+        medicionPorPaisRepository.save(medicionPais);
 
         // 🗃 Guarda también en la tabla principal de mediciones
         Medicion guardada = medicionRepository.save(medicion);
