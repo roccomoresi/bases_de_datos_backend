@@ -1,13 +1,12 @@
 package com.example.persistencia.poliglota.controller.cassandra;
 
-import com.example.persistencia.poliglota.model.cassandra.Medicion;
-import com.example.persistencia.poliglota.model.cassandra.MedicionPorCiudad;
-import com.example.persistencia.poliglota.service.cassandra.MedicionGeneratorService;
+import com.example.persistencia.poliglota.model.cassandra.*;
 import com.example.persistencia.poliglota.service.cassandra.MedicionService;
-
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -17,58 +16,81 @@ import java.util.UUID;
 public class MedicionController {
 
     private final MedicionService medicionService;
-    private final MedicionGeneratorService generatorService;
 
-    public MedicionController(MedicionService medicionService, MedicionGeneratorService generatorService) {
+    public MedicionController(MedicionService medicionService) {
         this.medicionService = medicionService;
-        this.generatorService = generatorService;
     }
 
-    // 🔹 Obtener mediciones por sensor
+    @GetMapping("/pais/{pais}")
+public List<MedicionPorPais> obtenerPorPais(@PathVariable String pais) {
+    return medicionService.obtenerPorPais(pais);
+}
+
+
+    // 🔹 Obtener todas las mediciones por sensor
     @GetMapping("/{sensorId}")
-    public List<Medicion> obtenerPorSensor(@PathVariable UUID sensorId) {
-        return medicionService.obtenerPorSensor(sensorId);
+    public ResponseEntity<?> obtenerPorSensor(@PathVariable UUID sensorId) {
+        try {
+            List<MedicionPorSensor> result = medicionService.obtenerPorSensor(sensorId);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(
+                Map.of("error", "Error interno", "detalle", e.getMessage())
+            );
+        }
     }
 
+    // 🔹 Obtener mediciones por sensor y rango de fechas
     @GetMapping("/{sensorId}/rango-fechas")
-public ResponseEntity<?> obtenerPorSensorYRangoFechas(
-        @PathVariable UUID sensorId,
-        @RequestParam("desde") String desde,
-        @RequestParam("hasta") String hasta) {
+    public ResponseEntity<?> obtenerPorSensorYRangoFechas(
+            @PathVariable UUID sensorId,
+            @RequestParam("desde") String desde,
+            @RequestParam("hasta") String hasta) {
+        try {
+            List<MedicionPorSensor> result = medicionService.obtenerPorSensorYRangoFechas(sensorId, desde, hasta);
+            return ResponseEntity.ok()
+                    .header("Cache-Control", "no-cache, no-store, must-revalidate")
+                    .body(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(
+                    Map.of("error", "Error interno", "detalle", e.getMessage())
+            );
+        }
+    }
+
+
+
+
+
+    // 🔹 Obtener mediciones de rango global (usa los buckets)
+    @GetMapping("/rango-global")
+    public ResponseEntity<?> getMedicionesRangoGlobal(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime desde,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime hasta) {
+        try {
+            List<MedicionPorRangoGlobal> result = medicionService.obtenerMedicionesRangoGlobal(desde, hasta);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(
+                    Map.of("error", "Error interno", "detalle", e.getMessage())
+            );
+        }
+    }
+
+    // 🔹 Crear una nueva medición (se guarda en las 4 tablas)
+    @PostMapping
+public ResponseEntity<?> crearMedicion(@RequestBody Medicion medicion) {
     try {
-        List<Medicion> result = medicionService.obtenerPorSensorYRangoFechas(sensorId, desde, hasta);
-        return ResponseEntity.ok()
-                .header("Cache-Control", "no-cache, no-store, must-revalidate")
-                .body(result); // ✅ siempre JSON
+        Medicion result = medicionService.guardar(medicion);
+        return ResponseEntity.ok(result);
     } catch (Exception e) {
         return ResponseEntity.internalServerError().body(
             Map.of(
-                "error", "Error interno",
+                "error", "Error al crear medición",
                 "detalle", e.getMessage()
             )
         );
     }
 }
 
-
-    // 🔹 Obtener mediciones por ciudad y país
-    @GetMapping("/ciudad/{ciudad}")
-    public List<MedicionPorCiudad> obtenerPorCiudad(
-            @PathVariable String ciudad,
-            @RequestParam String pais) {
-        return medicionService.obtenerPorCiudad(ciudad, pais);
-    }
-
-    // 🔹 Crear una medición (guardando en ambas tablas)
-    @PostMapping
-    public Medicion crearMedicion(@RequestBody Medicion medicion) {
-        return medicionService.guardar(medicion);
-    }
-
-    // // 🔹 Generar mediciones de prueba (una sola vez)
-    // @PostMapping("/generar-una-vez")
-    // public ResponseEntity<String> generarMedicionesUnaVez() {
-    //     String resultado = generatorService.generarMedicionesUnaVez();
-    //     return ResponseEntity.ok(resultado);
-    // }
 }

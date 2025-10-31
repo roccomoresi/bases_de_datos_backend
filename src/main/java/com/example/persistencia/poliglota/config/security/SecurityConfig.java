@@ -34,9 +34,10 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
             .requestMatchers(
                 "/swagger-ui/**",
                 "/v3/api-docs/**",
-                "/api/sql/auth/**",
-                "/api/sql/usuarios/register",
-                "/api/sql/usuarios/login",
+                "/api/auth/**",
+                "/auth/**",
+                "/api/usuarios/register",
+                "/api/usuarios/login",
                 "/api/cassandra/**",
                 "/api/mongo/**"
             ).permitAll()
