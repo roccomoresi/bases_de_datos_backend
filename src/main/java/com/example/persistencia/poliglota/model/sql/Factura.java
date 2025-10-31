@@ -2,6 +2,8 @@ package com.example.persistencia.poliglota.model.sql;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import com.example.persistencia.poliglota.model.sql.Usuario;
 import lombok.extern.slf4j.Slf4j;
 
