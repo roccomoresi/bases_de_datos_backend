@@ -9,7 +9,7 @@ import java.util.UUID;
 public class Proceso {
 
     @Id
-    private UUID id;
+    private String id;
     private String nombre;
     private String descripcion;
     private String tipo; // Ej: "Informe", "Servicio", "Alerta", etc.
@@ -19,7 +19,7 @@ public class Proceso {
 
 
 public Proceso(String nombre, String descripcion, String tipo, BigDecimal costo) {
-    this.id = UUID.randomUUID();
+    this.id = UUID.randomUUID().toString();
     this.nombre = nombre;
     this.descripcion = descripcion;
     this.tipo = tipo;
@@ -29,14 +29,14 @@ public Proceso(String nombre, String descripcion, String tipo, BigDecimal costo)
 
 
     public Proceso() {
-        this.id = UUID.randomUUID();}
+        this.id = UUID.randomUUID().toString();}
 
 
-    public UUID getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(String id) {
         this.id = id;
     }
 

@@ -18,9 +18,9 @@ public class SolicitudProcesoController {
         this.service = service;
     }
 
-    /* ───────────────────────────────────────────────
+    /* ───────────────────────────────
        🔹 LISTAR SOLICITUDES
-    ─────────────────────────────────────────────── */
+    ─────────────────────────────── */
     @GetMapping
     public ResponseEntity<List<SolicitudProceso>> getAll() {
         return ResponseEntity.ok(service.getAll());
@@ -34,7 +34,7 @@ public class SolicitudProcesoController {
     }
 
     @GetMapping("/usuario/{usuarioId}")
-    public ResponseEntity<List<SolicitudProceso>> getByUsuario(@PathVariable UUID usuarioId) {
+    public ResponseEntity<List<SolicitudProceso>> getByUsuario(@PathVariable Integer usuarioId) {
         return ResponseEntity.ok(service.getByUsuario(usuarioId));
     }
 
@@ -43,20 +43,25 @@ public class SolicitudProcesoController {
         return ResponseEntity.ok(service.getByEstado(estado));
     }
 
-    /* ───────────────────────────────────────────────
+    /* ───────────────────────────────
        🟢 CREAR NUEVA SOLICITUD
-    ─────────────────────────────────────────────── */
+    ─────────────────────────────── */
     @PostMapping
     public ResponseEntity<SolicitudProceso> create(
             @RequestParam Integer usuarioId,
-            @RequestParam UUID procesoId
+            @RequestParam String procesoId // ✅ ahora String
     ) {
-        return ResponseEntity.ok(service.create(usuarioId, procesoId));
+        if (usuarioId == null || procesoId == null || procesoId.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        SolicitudProceso solicitud = service.create(usuarioId, procesoId);
+        return ResponseEntity.ok(solicitud);
     }
 
-    /* ───────────────────────────────────────────────
+    /* ───────────────────────────────
        🔄 ACTUALIZAR ESTADO
-    ─────────────────────────────────────────────── */
+    ─────────────────────────────── */
     @PutMapping("/{id}/estado")
     public ResponseEntity<SolicitudProceso> updateEstado(
             @PathVariable UUID id,
@@ -65,9 +70,9 @@ public class SolicitudProcesoController {
         return ResponseEntity.ok(service.updateEstado(id, estado));
     }
 
-    /* ───────────────────────────────────────────────
+    /* ───────────────────────────────
        📝 AGREGAR RESULTADO
-    ─────────────────────────────────────────────── */
+    ─────────────────────────────── */
     @PutMapping("/{id}/resultado")
     public ResponseEntity<SolicitudProceso> updateResultado(
             @PathVariable UUID id,
@@ -76,9 +81,9 @@ public class SolicitudProcesoController {
         return ResponseEntity.ok(service.updateResultado(id, resultado));
     }
 
-    /* ───────────────────────────────────────────────
+    /* ───────────────────────────────
        ❌ ELIMINAR SOLICITUD
-    ─────────────────────────────────────────────── */
+    ─────────────────────────────── */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         service.delete(id);

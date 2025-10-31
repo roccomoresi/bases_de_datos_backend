@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/mongo/historial")
@@ -24,12 +23,12 @@ public class HistorialEjecucionController {
     }
 
     @GetMapping("/usuario/{usuarioId}")
-    public ResponseEntity<List<HistorialEjecucion>> getByUsuario(@PathVariable UUID usuarioId) {
+    public ResponseEntity<List<HistorialEjecucion>> getByUsuario(@PathVariable Integer usuarioId) {
         return ResponseEntity.ok(service.getByUsuario(usuarioId));
     }
 
     @GetMapping("/proceso/{procesoId}")
-    public ResponseEntity<List<HistorialEjecucion>> getByProceso(@PathVariable UUID procesoId) {
+    public ResponseEntity<List<HistorialEjecucion>> getByProceso(@PathVariable String procesoId) {
         return ResponseEntity.ok(service.getByProceso(procesoId));
     }
 }

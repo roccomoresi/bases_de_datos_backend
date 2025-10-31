@@ -49,6 +49,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
             .requestMatchers("/api/monitoreo/**")
                 .hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
             .requestMatchers("/api/informes/**").authenticated()
+            .requestMatchers("/api/mongo/**").authenticated()
 
             // 🔒 Por defecto, todo lo demás requiere autenticación
             .anyRequest().authenticated()
