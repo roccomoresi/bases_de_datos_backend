@@ -64,5 +64,11 @@ public class ChatController {
     public ResponseEntity<Chat> marcarLeido(@PathVariable String chatId, @PathVariable int index) {
         return ResponseEntity.ok(service.marcarMensajeComoLeido(chatId, index));
     }
+    // 🚫 Marcar mensaje como NO leído
+    @PutMapping("/{chatId}/mensajes/{index}/noleido")
+    public ResponseEntity<Chat> marcarNoLeido(@PathVariable String chatId, @PathVariable int index) {
+        return ResponseEntity.ok(service.marcarMensajeComoNoLeido(chatId, index));
+    }
+
 }
 

@@ -75,4 +75,18 @@ public class ChatService {
             throw new RuntimeException("Índice de mensaje inválido");
         }
     }
+    // 🔹 Marcar mensaje como NO leído
+    public Chat marcarMensajeComoNoLeido(String chatId, int indexMensaje) {
+        Chat chat = repository.findById(chatId)
+                .orElseThrow(() -> new RuntimeException("Chat no encontrado"));
+
+        if (indexMensaje >= 0 && indexMensaje < chat.getMensajes().size()) {
+            chat.getMensajes().get(indexMensaje).setLeido(false);
+            chat.setUltimaActualizacion(Instant.now());
+            return repository.save(chat);
+        } else {
+            throw new RuntimeException("Índice de mensaje inválido");
+        }
+    }
+
 }
