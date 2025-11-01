@@ -20,18 +20,18 @@ public class Chat {
     private String id;
 
     private List<String> participantes = new ArrayList<>();
-
+    private String nombreGrupo; // solo se usa si es grupal
+    private String tipo; // "privado" o "grupo"
+    private Instant ultimaActualizacion;
     private List<Mensaje> mensajes = new ArrayList<>();
 
-    private Instant ultimaActualizacion = Instant.now();
-
-    // Clase interna para representar los mensajes del chat
     @Data
-    @NoArgsConstructor
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class Mensaje {
         private String remitente;
         private String contenido;
         private Instant fechaEnvio;
+        private boolean leido = false;
     }
 }

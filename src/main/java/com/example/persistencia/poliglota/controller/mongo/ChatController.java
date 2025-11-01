@@ -18,56 +18,51 @@ public class ChatController {
         this.service = service;
     }
 
-    // 🗨️ Crear chat
-    @PostMapping
+    // 🟢 Crear chat privado
+    @PostMapping("/privado")
     public ResponseEntity<Chat> crearChat(@RequestBody Map<String, Object> body) {
         List<String> participantes = (List<String>) body.get("participantes");
-        Chat chat = service.crearChat(participantes);
-        return ResponseEntity.ok(chat);
+        return ResponseEntity.ok(service.crearChat(participantes));
+    }
+
+    // 🟣 Crear grupo
+    @PostMapping("/grupo")
+    public ResponseEntity<Chat> crearGrupo(@RequestBody Map<String, Object> body) {
+        String nombre = (String) body.get("nombreGrupo");
+        List<String> participantes = (List<String>) body.get("participantes");
+        return ResponseEntity.ok(service.crearGrupo(nombre, participantes));
     }
 
     // 💬 Enviar mensaje
-    @PostMapping("/{id}/mensajes")
-    public ResponseEntity<Chat> enviarMensaje(
-            @PathVariable String id,
-            @RequestBody Map<String, String> body) {
-        Chat chat = service.enviarMensaje(id, body.get("remitente"), body.get("contenido"));
-        return ResponseEntity.ok(chat);
-    }
-
-    // 📜 Listar todos los chats
-    @GetMapping
-    public ResponseEntity<List<Chat>> listar() {
-        return ResponseEntity.ok(service.listarChatsPorUsuario("todos"));
-    }
-
-    // 🔍 Obtener chat por ID
-    @GetMapping("/{id}")
-    public ResponseEntity<Chat> obtener(@PathVariable String id) {
-        return ResponseEntity.ok(service.obtenerChat(id));
-    }
-    @PostMapping("/mensaje")
-    public ResponseEntity<Chat> enviarMensajeEntreUsuarios(@RequestBody Map<String, String> body) {
+    @PostMapping("/{chatId}/mensajes")
+    public ResponseEntity<Chat> enviarMensaje(@PathVariable String chatId, @RequestBody Map<String, String> body) {
         String remitente = body.get("remitente");
-        String destinatario = body.get("destinatario");
         String contenido = body.get("contenido");
+        return ResponseEntity.ok(service.enviarMensaje(chatId, remitente, contenido));
+    }
 
-        // 🔹 Buscamos si ya existe un chat entre ambos
-        List<String> participantes = List.of(remitente, destinatario);
-        List<Chat> existentes = service.listarChatsPorUsuario(remitente).stream()
-                .filter(c -> c.getParticipantes().containsAll(participantes))
-                .toList();
+    // 🗂️ Ver chat
+    @GetMapping("/{chatId}")
+    public ResponseEntity<Chat> obtenerChat(@PathVariable String chatId) {
+        return ResponseEntity.ok(service.obtenerChat(chatId));
+    }
 
-        Chat chat;
-        if (existentes.isEmpty()) {
-            chat = service.crearChat(participantes);
-        } else {
-            chat = existentes.get(0);
-        }
+    // 📱 Ver chats por usuario
+    @GetMapping("/usuario/{usuarioId}")
+    public ResponseEntity<List<Chat>> listarPorUsuario(@PathVariable String usuarioId) {
+        return ResponseEntity.ok(service.listarChatsPorUsuario(usuarioId));
+    }
 
-        // 🔹 Enviamos el mensaje en ese chat
-        Chat actualizado = service.enviarMensaje(chat.getId(), remitente, contenido);
+    // 🕓 Conversaciones recientes
+    @GetMapping("/recientes")
+    public ResponseEntity<List<Chat>> getRecientes() {
+        return ResponseEntity.ok(service.listarRecientes());
+    }
 
-        return ResponseEntity.ok(actualizado);
+    // 👁️ Marcar mensaje como leído
+    @PutMapping("/{chatId}/mensajes/{index}/leido")
+    public ResponseEntity<Chat> marcarLeido(@PathVariable String chatId, @PathVariable int index) {
+        return ResponseEntity.ok(service.marcarMensajeComoLeido(chatId, index));
     }
 }
+
