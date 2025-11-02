@@ -1,66 +1,56 @@
 package com.example.persistencia.poliglota.controller.sql;
 
-import com.example.persistencia.poliglota.model.sql.Factura;
+import com.example.persistencia.poliglota.dto.PagoRequest;
+import com.example.persistencia.poliglota.dto.PagoResponse;
 import com.example.persistencia.poliglota.model.sql.Pago;
-import com.example.persistencia.poliglota.model.sql.Pago.MetodoPago;
-import com.example.persistencia.poliglota.service.sql.FacturaService;
 import com.example.persistencia.poliglota.service.sql.PagoService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import lombok.extern.slf4j.Slf4j;
-
 @Slf4j
 @RestController
-@RequestMapping("/api/sql/pagos")
+@RequestMapping("/api/finanzas/pagos")
+@RequiredArgsConstructor
 public class PagoController {
 
     private final PagoService pagoService;
-    private final FacturaService facturaService;
 
-    public PagoController(PagoService pagoService, FacturaService facturaService) {
-        this.pagoService = pagoService;
-        this.facturaService = facturaService;
-    }
+    @PostMapping
+    public ResponseEntity<?> registrarPago(@RequestBody PagoRequest request) {
+        log.info("💳 Registrando pago de factura ID {} por ${} ({})",
+                request.getIdFactura(), request.getMonto(), request.getMetodoPago());
 
-    /* ───────────────────────────────────────────────
-       📋 LISTAR PAGOS
-    ─────────────────────────────────────────────── */
-    @GetMapping
-    public ResponseEntity<List<Pago>> getAll() {
-        return ResponseEntity.ok(pagoService.getAll());
-    }
-
-    @GetMapping("/factura/{facturaId}")
-    public ResponseEntity<List<Pago>> getByFactura(@PathVariable Integer facturaId) {
-        return ResponseEntity.ok(pagoService.getByFactura(facturaId));
-    }
-
-    /* ───────────────────────────────────────────────
-       💰 REGISTRAR NUEVO PAGO
-    ─────────────────────────────────────────────── */
-    @PostMapping("/registrar")
-    public ResponseEntity<Pago> registrarPago(
-            @RequestParam Integer facturaId,
-            @RequestParam Double monto,
-            @RequestParam(defaultValue = "efectivo") MetodoPago metodo
-    ) {
-        Factura factura = facturaService.getById(facturaId);
-        if (factura == null) {
-            return ResponseEntity.notFound().build();
+        if (request.getIdFactura() == null || request.getMonto() == null || request.getMetodoPago() == null) {
+            return ResponseEntity.badRequest().body(
+                    new ErrorResponse("Campos requeridos: idFactura, monto, metodoPago", "Faltan campos obligatorios"));
         }
 
-        Pago nuevoPago = pagoService.registrarPago(factura, monto, metodo);
-        return ResponseEntity.ok(nuevoPago);
+        try {
+            Pago pago = pagoService.registrarPago(
+                    request.getIdFactura(),
+                    request.getMonto(),
+                    request.getMetodoPago()
+            );
+
+            PagoResponse resp = new PagoResponse(
+                    pago.getIdPago(),
+                    pago.getFactura().getIdFactura(),
+                    pago.getFactura().getUsuario().getIdUsuario(),
+                    pago.getMetodoPago(),
+                    pago.getMontoPagado(),
+                    pago.getFechaPago().toString()
+            );
+
+            return ResponseEntity.ok(resp);
+
+        } catch (Exception e) {
+            log.error("❌ Error registrando pago: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(
+                    new ErrorResponse("Error interno", e.getMessage()));
+        }
     }
 
-    /* ───────────────────────────────────────────────
-       🗑️ ELIMINAR PAGO
-    ─────────────────────────────────────────────── */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        pagoService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+    record ErrorResponse(String error, String detalle) {}
 }

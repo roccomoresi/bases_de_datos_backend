@@ -1,54 +1,38 @@
 package com.example.persistencia.poliglota.service.sql;
 
 import com.example.persistencia.poliglota.model.sql.CuentaCorriente;
+import com.example.persistencia.poliglota.model.sql.Usuario;
 import com.example.persistencia.poliglota.repository.sql.CuentaCorrienteRepository;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Service
+@RequiredArgsConstructor
 public class CuentaCorrienteService {
 
-    private final CuentaCorrienteRepository repository;
+    private final CuentaCorrienteRepository cuentaCorrienteRepository;
 
-    public CuentaCorrienteService(CuentaCorrienteRepository repository) {
-        this.repository = repository;
-    }
-
-    public List<CuentaCorriente> getAll() {
-        return repository.findAll();
-    }
-
-    public CuentaCorriente getByUsuario(Integer usuarioId) {
-        return repository.findByUsuarioIdUsuario(usuarioId);
-    }
-
-    public CuentaCorriente save(CuentaCorriente cuenta) {
-        return repository.save(cuenta);
-    }
-
-    public void delete(Integer id) {
-        repository.deleteById(id);
+    @Transactional
+    public CuentaCorriente crearSiNoExiste(Usuario usuario) {
+        return cuentaCorrienteRepository.findByUsuario(usuario)
+                .orElseGet(() -> {
+                    CuentaCorriente c = new CuentaCorriente();
+                    c.setUsuario(usuario);
+                    c.setSaldo(0.0);
+                    return cuentaCorrienteRepository.save(c);
+                });
     }
 
     @Transactional
-    public void deleteByUsuarioId(Integer usuarioId) {
-        repository.deleteByUsuario_IdUsuario(usuarioId);
+    public void actualizarSaldo(CuentaCorriente cuenta, Double monto, boolean esCredito) {
+        Double nuevoSaldo = cuenta.getSaldo() + (esCredito ? monto : -monto);
+        cuenta.setSaldo(nuevoSaldo);
+        cuentaCorrienteRepository.save(cuenta);
     }
 
-    /* ───────────────────────────────────────────────
-       📈 Ajustar saldo e historial
-    ─────────────────────────────────────────────── */
-    public void ajustarSaldo(Integer usuarioId, Double monto, String motivo) {
-        CuentaCorriente cuenta = repository.findByUsuarioIdUsuario(usuarioId);
-        if (cuenta == null) return;
-
-        double nuevoSaldo = cuenta.getSaldoActual() + monto;
-        cuenta.setSaldoActual(nuevoSaldo);
-        cuenta.agregarMovimiento(motivo + " (" + monto + ")");
-        repository.save(cuenta);
+    public CuentaCorriente obtenerPorUsuario(Usuario usuario) {
+        return cuentaCorrienteRepository.findByUsuario(usuario)
+                .orElseThrow(() -> new RuntimeException("Cuenta corriente no encontrada para el usuario"));
     }
 }

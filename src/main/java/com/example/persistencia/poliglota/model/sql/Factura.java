@@ -1,65 +1,49 @@
 package com.example.persistencia.poliglota.model.sql;
 
 import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.example.persistencia.poliglota.model.sql.Usuario;
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
-
 @Entity
 @Table(name = "factura")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Factura {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_factura")
     private Integer idFactura;
 
-    private Double montoTotal = 0.0;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private Usuario usuario;
 
+    @Column(name = "fecha_emision", nullable = false)
     private LocalDateTime fechaEmision = LocalDateTime.now();
 
     @Enumerated(EnumType.STRING)
-    private EstadoFactura estado = EstadoFactura.pendiente;
+    @Column(name = "estado", nullable = false)
+    private EstadoFactura estado = EstadoFactura.PENDIENTE;
 
-    public enum EstadoFactura {
-        pendiente, pagada, vencida
-    }
+    @Column(name = "total", nullable = false)
+    private Double total;
 
-    // 🔹 Relación con Usuario
-    @ManyToOne
-    @JoinColumn(name = "id_usuario", nullable = false)
-    private Usuario usuario;
+    @Column(name = "descripcion_proceso")
+    private String descripcionProceso; // 🔹 referencia lógica al proceso en Mongo
 
-    // 🔹 Relación con Pagos
-    @OneToMany(mappedBy = "factura", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "factura", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Pago> pagos;
 
-    // 🔹 Relación con procesos facturados (vinculación lógica con Mongo)
-    private String procesosFacturados; 
-    // Podés guardar IDs de procesos o nombres concatenados, por ejemplo: "informe-01, alerta-02"
+    
 
-    // Getters y Setters
-    public Integer getIdFactura() { return idFactura; }
-    public void setIdFactura(Integer idFactura) { this.idFactura = idFactura; }
-
-    public Double getMontoTotal() { return montoTotal; }
-    public void setMontoTotal(Double montoTotal) { this.montoTotal = montoTotal; }
-
-    public LocalDateTime getFechaEmision() { return fechaEmision; }
-    public void setFechaEmision(LocalDateTime fechaEmision) { this.fechaEmision = fechaEmision; }
-
-    public EstadoFactura getEstado() { return estado; }
-    public void setEstado(EstadoFactura estado) { this.estado = estado; }
-
-    public Usuario getUsuario() { return usuario; }
-    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
-
-    public List<Pago> getPagos() { return pagos; }
-    public void setPagos(List<Pago> pagos) { this.pagos = pagos; }
-
-    public String getProcesosFacturados() { return procesosFacturados; }
-    public void setProcesosFacturados(String procesosFacturados) { this.procesosFacturados = procesosFacturados; }
+    public enum EstadoFactura {
+        PENDIENTE,
+        PAGADA,
+        VENCIDA
+    }
 }

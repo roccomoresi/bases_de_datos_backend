@@ -2,8 +2,12 @@ package com.example.persistencia.poliglota.model.sql;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -32,6 +36,10 @@ public class Usuario {
     @JoinColumn(name = "rol_id")
     private Rol rol;
 
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Factura> facturas;
+
     public enum EstadoUsuario {
         ACTIVO,
         INACTIVO
@@ -58,4 +66,10 @@ public class Usuario {
 
     public Rol getRol() { return rol; }
     public void setRol(Rol rol) { this.rol = rol; }
+    public List<Factura> getFacturas() {
+        return facturas;
+    }
+    public void setFacturas(List<Factura> facturas) {
+        this.facturas = facturas;
+    }
 }

@@ -2,6 +2,7 @@ package com.example.persistencia.poliglota.config.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -24,44 +25,45 @@ public class SecurityConfig {
     }
 
     @Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http
-        .csrf(csrf -> csrf.disable())
-        .cors(Customizer.withDefaults()) // Habilita CORS
-        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(auth -> auth
-            // ✅ Endpoints públicos
-            .requestMatchers(
-                "/swagger-ui/**",
-                "/v3/api-docs/**",
-                "/api/auth/**",
-                "/auth/**",
-                "/api/usuarios/register",
-                "/api/usuarios/login",
-                "/api/cassandra/**",
-                "/api/mongo/**"
-            ).permitAll()
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .cors(Customizer.withDefaults())
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                // ✅ Permitir preflight requests
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-            // 🔐 Rutas protegidas
-            .requestMatchers("/api/sql/usuarios/**").hasAuthority("ROLE_ADMIN")
-            .requestMatchers("/api/sql/facturas/**", "/api/sql/pagos/**", "/api/sql/cuentas/**", "/api/sql/movimientos/**")
-                .hasAnyAuthority("ROLE_ADMIN", "ROLE_USUARIO")
-            .requestMatchers("/api/monitoreo/**")
-                .hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
-            .requestMatchers("/api/informes/**").authenticated()
-            .requestMatchers("/api/mongo/**").authenticated()
+                // ✅ Endpoints públicos (login, register, docs, etc.)
+                .requestMatchers(
+                    "/auth/**",
+                    "/api/auth/**",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/api/usuarios/register",
+                    "/api/usuarios/login"
+                ).permitAll()
 
-            // 🔒 Por defecto, todo lo demás requiere autenticación
-            .anyRequest().authenticated()
-        )
-        .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                // 🔐 Endpoints protegidos
+                .requestMatchers("/api/sql/usuarios/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/api/sql/**", "/api/finanzas/**")
+                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_USUARIO")
+                .requestMatchers("/api/monitoreo/**")
+                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
+                .requestMatchers("/api/informes/**", "/api/mongo/**")
+                    .authenticated()
 
-    return http.build();
-}
+                // 🔒 Todo lo demás requiere autenticación
+                .anyRequest().authenticated()
+            )
+            // ✅ Muy importante: agregar el filtro JWT DESPUÉS de permitir /auth/**
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
 
     @Bean
-public PasswordEncoder passwordEncoder() {
-    return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
-}
-
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }

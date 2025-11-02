@@ -1,65 +1,64 @@
 package com.example.persistencia.poliglota.service.sql;
 
-import com.example.persistencia.poliglota.model.sql.Factura;
-import com.example.persistencia.poliglota.model.sql.Pago;
-import com.example.persistencia.poliglota.model.sql.CuentaCorriente;
+import com.example.persistencia.poliglota.model.sql.*;
+import com.example.persistencia.poliglota.repository.sql.FacturaRepository;
 import com.example.persistencia.poliglota.repository.sql.PagoRepository;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
+@RequiredArgsConstructor
 public class PagoService {
 
     private final PagoRepository pagoRepository;
-    private final FacturaService facturaService;
-    private final CuentaCorrienteService cuentaService;
+    private final FacturaRepository facturaRepository;
+    private final CuentaCorrienteService cuentaCorrienteService;
+    private final MovimientoCuentaService movimientoCuentaService;
 
-    public PagoService(PagoRepository pagoRepository, FacturaService facturaService, CuentaCorrienteService cuentaService) {
-        this.pagoRepository = pagoRepository;
-        this.facturaService = facturaService;
-        this.cuentaService = cuentaService;
-    }
+    @Transactional
+    public Pago registrarPago(Integer idFactura, Double montoPagado, String metodoPago) {
+        Factura factura = facturaRepository.findById(idFactura)
+                .orElseThrow(() -> new RuntimeException("Factura no encontrada"));
 
-    public List<Pago> getAll() {
-        return pagoRepository.findAll();
-    }
-
-    public List<Pago> getByFactura(Integer facturaId) {
-        return pagoRepository.findByFacturaIdFactura(facturaId);
-    }
-
-    public Pago save(Pago pago) {
-        return pagoRepository.save(pago);
-    }
-
-    public void delete(Integer id) {
-        pagoRepository.deleteById(id);
-    }
-
-    /* ───────────────────────────────────────────────
-       💰 Registrar un nuevo pago y actualizar saldo
-    ─────────────────────────────────────────────── */
-    public Pago registrarPago(Factura factura, Double monto, Pago.MetodoPago metodo) {
+        // Crear el pago
         Pago pago = new Pago();
         pago.setFactura(factura);
-        pago.setMonto(monto);
-        pago.setMetodoPago(metodo);
-        pago.setFechaPago(LocalDateTime.now());
+        pago.setMontoPagado(montoPagado);
+        pago.setMetodoPago(metodoPago);
 
-        // 🔹 Guardar pago
-        Pago pagoGuardado = pagoRepository.save(pago);
+        // Guardar el pago
+        Pago savedPago = pagoRepository.save(pago);
 
-        // 🔹 Marcar factura como pagada
-        facturaService.marcarComoPagada(factura);
+        // Actualizar estado de factura
+        factura.setEstado(Factura.EstadoFactura.PAGADA);
+        facturaRepository.save(factura);
 
-        // 🔹 Actualizar cuenta corriente del usuario
-        cuentaService.ajustarSaldo(factura.getUsuario().getIdUsuario(), -monto, 
-                "Pago de factura #" + factura.getIdFactura());
+        // 🔹 Obtener o crear la cuenta corriente del usuario
+        CuentaCorriente cuenta = cuentaCorrienteService.crearSiNoExiste(factura.getUsuario());
 
-        return pagoGuardado;
+        // 🔹 Registrar movimiento tipo CREDITO (Pago = suma saldo)
+        movimientoCuentaService.registrarMovimiento(
+                cuenta,
+                "Pago de factura #" + factura.getIdFactura(),
+                montoPagado,
+                MovimientoCuenta.TipoMovimiento.CREDITO
+        );
+
+        // 🔹 Actualizar saldo (sumar total)
+        cuentaCorrienteService.actualizarSaldo(cuenta, montoPagado, true);
+
+        return savedPago;
     }
+
+    public List<Pago> obtenerPagosPorFactura(Integer idFactura) {
+        return pagoRepository.findByFactura_IdFactura(idFactura);
+    }
+
+    public List<Pago> obtenerPagosPorUsuario(Integer idUsuario) {
+    return pagoRepository.findByFactura_Usuario_IdUsuario(idUsuario);
+}
+
 }
