@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.example.persistencia.poliglota")
 @EnableScheduling
 public class PersistenciaPoliglotaApplication {
     public static void main(String[] args) {

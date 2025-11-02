@@ -1,32 +1,42 @@
 package com.example.persistencia.poliglota.model.sql;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import java.time.LocalDateTime;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Entity
-@Data
 @Table(name = "movimiento_cuenta")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class MovimientoCuenta {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_movimiento")
     private Integer idMovimiento;
 
-    @ManyToOne
-    @JoinColumn(name = "cuenta_id")
-    private CuentaCorriente cuenta;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "id_cuenta", nullable = false)
+    private CuentaCorriente cuentaCorriente;
 
-    private LocalDateTime fechaMovimiento = LocalDateTime.now();
+    @Column(name = "fecha", nullable = false)
+    private LocalDateTime fecha = LocalDateTime.now();
 
-    @Enumerated(EnumType.STRING)
-    private TipoMovimiento tipo;
-
-    private Double monto;
+    @Column(name = "descripcion")
     private String descripcion;
 
+    @Column(name = "monto", nullable = false)
+    private Double monto;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_movimiento", nullable = false)
+    private TipoMovimiento tipoMovimiento;
+
     public enum TipoMovimiento {
-        DEBITO, CREDITO
+        DEBITO,   // Ej: factura → resta saldo
+        CREDITO   // Ej: pago → suma saldo
     }
 }
