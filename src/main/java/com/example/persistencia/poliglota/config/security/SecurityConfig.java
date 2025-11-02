@@ -1,16 +1,18 @@
-package com.example.persistencia_poliglota.config;
+package com.example.persistencia.poliglota.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
@@ -18,38 +20,30 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // Rutas públicas (whitelist)
     private static final String[] WHITELIST = new String[] {
             "/swagger-ui/",
             "/swagger-ui.html",
             "/v3/api-docs/",
-            "/error"              // por si Spring devuelve /error en respuestas
+            "/error",
+            "/api/"
     };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // CORS abierto para pruebas (Swagger, Postman, etc.)
             .cors(c -> c.configurationSource(corsConfigurationSource()))
-            // Sin CSRF porque exponemos APIs
             .csrf(csrf -> csrf.disable())
-            // APIs sin estado (mejor para backends REST)
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // Autorizaciones
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(WHITELIST).permitAll()
-                // Permitir TODAS las APIs del backend
-                .requestMatchers("/api/").permitAll()
-                .anyRequest().authenticated()
+                .anyRequest().permitAll()
             )
-            // Deshabilitamos formLogin y dejamos httpBasic por si algún día lo usan
             .formLogin(form -> form.disable())
             .httpBasic(Customizer.withDefaults());
 
         return http.build();
     }
 
-    // CORS: todos los orígenes, métodos y headers (ideal para QA)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
@@ -63,4 +57,10 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/", cfg);
         return source;
     }
-} 
+
+    // 👇 ESTE ES EL QUE TE FALTA
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
