@@ -1,15 +1,15 @@
 package com.example.persistencia.poliglota.controller.sql;
 
+import com.example.persistencia.poliglota.dto.PagoRequest;
 import com.example.persistencia.poliglota.model.sql.Factura;
 import com.example.persistencia.poliglota.model.sql.Pago;
-import com.example.persistencia.poliglota.model.sql.Pago.MetodoPago;
 import com.example.persistencia.poliglota.service.sql.FacturaService;
 import com.example.persistencia.poliglota.service.sql.PagoService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
@@ -24,43 +24,37 @@ public class PagoController {
         this.facturaService = facturaService;
     }
 
-    /* ───────────────────────────────────────────────
-       📋 LISTAR PAGOS
-    ─────────────────────────────────────────────── */
     @GetMapping
-    public ResponseEntity<List<Pago>> getAll() {
-        return ResponseEntity.ok(pagoService.getAll());
+    public List<Pago> getAll() {
+        return pagoService.getAll();
     }
 
     @GetMapping("/factura/{facturaId}")
-    public ResponseEntity<List<Pago>> getByFactura(@PathVariable Integer facturaId) {
-        return ResponseEntity.ok(pagoService.getByFactura(facturaId));
+    public List<Pago> getByFactura(@PathVariable Integer facturaId) {
+        return pagoService.getByFactura(facturaId);
     }
 
-    /* ───────────────────────────────────────────────
-       💰 REGISTRAR NUEVO PAGO
-    ─────────────────────────────────────────────── */
-    @PostMapping("/registrar")
-    public ResponseEntity<Pago> registrarPago(
-            @RequestParam Integer facturaId,
-            @RequestParam Double monto,
-            @RequestParam(defaultValue = "efectivo") MetodoPago metodo
-    ) {
-        Factura factura = facturaService.getById(facturaId);
+    // 🔥 Nuevo método usando tu DTO PagoRequest
+    @PostMapping
+    public ResponseEntity<Pago> registrarPago(@RequestBody PagoRequest request) {
+
+        // Buscar la factura asociada
+        Factura factura = facturaService.getById(request.getIdFactura());
         if (factura == null) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().build();
         }
 
-        Pago nuevoPago = pagoService.registrarPago(factura, monto, metodo);
-        return ResponseEntity.ok(nuevoPago);
+        // Convertir el String del método a enum (según tu modelo Pago)
+        Pago.MetodoPago metodo = Pago.MetodoPago.valueOf(request.getMetodoPago().toLowerCase());
+
+        // Registrar el pago y actualizar estado + saldo
+        Pago pagoGuardado = pagoService.registrarPago(factura, request.getMonto(), metodo);
+
+        return ResponseEntity.ok(pagoGuardado);
     }
 
-    /* ───────────────────────────────────────────────
-       🗑️ ELIMINAR PAGO
-    ─────────────────────────────────────────────── */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+    public void delete(@PathVariable Integer id) {
         pagoService.delete(id);
-        return ResponseEntity.noContent().build();
     }
 }
