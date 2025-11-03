@@ -53,7 +53,7 @@ public class PagoService {
     }
 
     // 🔹 Obtener pagos por factura (para GET /pagos/factura/{id})
-    public List<Pago> getByFactura(Integer idFactura) {
+    public List<Pago> obtenerPagosPorFactura(Integer idFactura) {
         return pagoRepository.findByFactura_IdFactura(idFactura);
     }
 
