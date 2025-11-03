@@ -24,35 +24,41 @@ public class PagoController {
         this.facturaService = facturaService;
     }
 
+    // 🔹 Listar todos los pagos
     @GetMapping
     public List<Pago> getAll() {
         return pagoService.getAll();
     }
 
+    // 🔹 Listar pagos por factura
     @GetMapping("/factura/{facturaId}")
     public List<Pago> getByFactura(@PathVariable Integer facturaId) {
         return pagoService.getByFactura(facturaId);
     }
 
-    // 🔥 Nuevo método usando tu DTO PagoRequest
+    // 🔹 Registrar nuevo pago
     @PostMapping
     public ResponseEntity<Pago> registrarPago(@RequestBody PagoRequest request) {
+        try {
+            // Buscar la factura asociada
+            Factura factura = facturaService.getById(request.getIdFactura())
+                    .orElseThrow(() -> new RuntimeException("Factura no encontrada"));
 
-        // Buscar la factura asociada
-        Factura factura = facturaService.getById(request.getIdFactura());
-        if (factura == null) {
+            // Registrar el pago (usa el método de PagoService que ya tenés)
+            Pago pagoGuardado = pagoService.registrarPago(
+                    factura.getIdFactura(),
+                    request.getMonto(),
+                    request.getMetodoPago()
+            );
+
+            return ResponseEntity.ok(pagoGuardado);
+        } catch (Exception e) {
+            log.error("❌ Error al registrar el pago: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         }
-
-        // Convertir el String del método a enum (según tu modelo Pago)
-        Pago.MetodoPago metodo = Pago.MetodoPago.valueOf(request.getMetodoPago().toLowerCase());
-
-        // Registrar el pago y actualizar estado + saldo
-        Pago pagoGuardado = pagoService.registrarPago(factura, request.getMonto(), metodo);
-
-        return ResponseEntity.ok(pagoGuardado);
     }
 
+    // 🔹 Eliminar un pago
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Integer id) {
         pagoService.delete(id);

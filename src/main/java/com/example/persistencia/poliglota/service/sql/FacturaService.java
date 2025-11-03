@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -67,4 +68,8 @@ public class FacturaService {
 
         return crearFactura(f);
     }
+    public Optional<Factura> getById(Integer id) {
+        return facturaRepository.findById(id);
+    }
+    
 }
