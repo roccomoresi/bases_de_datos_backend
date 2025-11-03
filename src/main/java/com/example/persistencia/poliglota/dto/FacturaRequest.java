@@ -9,5 +9,9 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class FacturaRequest {
     private Double monto;
+
     private String fecha;
+
+
 }
+
