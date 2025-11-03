@@ -44,15 +44,15 @@ public class FacturaController {
             return ResponseEntity.badRequest().body(Map.of("error", "El campo idUsuario es obligatorio"));
         }
     
-        Usuario usuario = usuarioRepository.findById(req.getIdUsuario())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID " + req.getIdUsuario()));
+        Usuario usuario = new Usuario();
+        usuario.setIdUsuario(req.getIdUsuario()); // ✅ solo referencia persistente
     
         Factura factura = new Factura();
         factura.setUsuario(usuario);
         factura.setTotal(req.getTotal());
         factura.setDescripcionProceso(req.getDescripcionProceso());
-        factura.setEstado(Factura.EstadoFactura.PENDIENTE); // 🟢 NUEVO: estado por defecto
-        factura.setFechaEmision(java.time.LocalDateTime.now()); // 🕒 NUEVO: fecha actual
+        factura.setEstado(Factura.EstadoFactura.PENDIENTE);
+        factura.setFechaEmision(java.time.LocalDateTime.now());
     
         Factura saved = facturaService.crearFactura(factura);
     
