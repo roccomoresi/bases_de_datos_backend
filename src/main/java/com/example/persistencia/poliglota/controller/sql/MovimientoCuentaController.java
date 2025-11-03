@@ -2,39 +2,59 @@ package com.example.persistencia.poliglota.controller.sql;
 
 import com.example.persistencia.poliglota.model.sql.MovimientoCuenta;
 import com.example.persistencia.poliglota.service.sql.MovimientoCuentaService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/sql/movimientos")
+@RequestMapping("/api/finanzas/movimientos")
+@RequiredArgsConstructor
 public class MovimientoCuentaController {
 
-    private final MovimientoCuentaService service;
+    private final MovimientoCuentaService movimientoCuentaService;
 
-    public MovimientoCuentaController(MovimientoCuentaService service) {
-        this.service = service;
-    }
-
+    /**
+     * 🔹 1. Listar todos los movimientos
+     */
     @GetMapping
-    public List<MovimientoCuenta> getAll() {
-        return service.getAll();
+    public ResponseEntity<List<MovimientoCuenta>> listarTodos() {
+        log.info("📄 Listando todos los movimientos de cuenta");
+        List<MovimientoCuenta> movimientos = movimientoCuentaService.getAll();
+        return ResponseEntity.ok(movimientos);
     }
 
-    @GetMapping("/cuenta/{cuentaId}")
-    public List<MovimientoCuenta> getByCuenta(@PathVariable Integer cuentaId) {
-        return service.getByCuenta(cuentaId);
+    /**
+     * 🔹 2. Listar movimientos por cuenta corriente
+     */
+    @GetMapping("/cuenta/{idCuenta}")
+    public ResponseEntity<List<MovimientoCuenta>> listarPorCuenta(@PathVariable Integer idCuenta) {
+        log.info("📄 Listando movimientos de la cuenta ID {}", idCuenta);
+        List<MovimientoCuenta> movimientos = movimientoCuentaService.getByCuenta(idCuenta);
+        return ResponseEntity.ok(movimientos);
     }
 
+    /**
+     * 🔹 3. Registrar un movimiento manual (opcional, para testing)
+     */
     @PostMapping
-    public MovimientoCuenta create(@RequestBody MovimientoCuenta movimiento) {
-        return service.save(movimiento);
+    public ResponseEntity<MovimientoCuenta> crearMovimiento(@RequestBody MovimientoCuenta movimiento) {
+        log.info("💰 Creando movimiento manual para cuenta {}", 
+                movimiento.getCuentaCorriente() != null ? movimiento.getCuentaCorriente().getIdCuenta() : "sin cuenta");
+        MovimientoCuenta saved = movimientoCuentaService.save(movimiento);
+        return ResponseEntity.ok(saved);
     }
 
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Integer id) {
-        service.delete(id);
+    /**
+     * 🔹 4. Eliminar un movimiento (solo para pruebas)
+     */
+    @DeleteMapping("/{idMovimiento}")
+    public ResponseEntity<Void> eliminarMovimiento(@PathVariable Integer idMovimiento) {
+        log.info("🗑 Eliminando movimiento ID {}", idMovimiento);
+        movimientoCuentaService.delete(idMovimiento);
+        return ResponseEntity.noContent().build();
     }
 }

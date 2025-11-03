@@ -1,98 +1,85 @@
 package com.example.persistencia.poliglota.controller.sql;
 
+import com.example.persistencia.poliglota.dto.FacturaCreateRequest;
+import com.example.persistencia.poliglota.dto.FacturaResponse;
 import com.example.persistencia.poliglota.model.sql.Factura;
+import com.example.persistencia.poliglota.model.sql.Usuario;
+import com.example.persistencia.poliglota.repository.sql.UsuarioRepository;
 import com.example.persistencia.poliglota.service.sql.FacturaService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-@Slf4j
 @RestController
-@RequestMapping("/api/sql/facturas")
+@RequestMapping("/api/finanzas/facturas")
+@RequiredArgsConstructor
 public class FacturaController {
 
-    private final FacturaService service;
+    private final FacturaService facturaService;
+    private final UsuarioRepository usuarioRepository;
 
-    public FacturaController(FacturaService service) {
-        this.service = service;
+    // 🔹 1. Listar facturas por usuario
+    @GetMapping("/{idUsuario}")
+    public ResponseEntity<List<FacturaResponse>> listarFacturas(@PathVariable Integer idUsuario) {
+        List<Factura> facturas = facturaService.obtenerFacturasPorUsuario(idUsuario);
+        List<FacturaResponse> resp = facturas.stream().map(f -> new FacturaResponse(
+                f.getIdFactura(),
+                f.getUsuario() != null ? f.getUsuario().getIdUsuario() : null,
+                f.getFechaEmision(),
+                f.getEstado().name(),
+                f.getTotal(),
+                f.getDescripcionProceso()
+        )).collect(Collectors.toList());
+        return ResponseEntity.ok(resp);
     }
 
-    /* ───────────────────────────────────────────────
-       📋 LISTAR FACTURAS
-    ─────────────────────────────────────────────── */
-    @GetMapping
-    public ResponseEntity<List<Factura>> getAll() {
-        return ResponseEntity.ok(service.getAll());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Factura> getById(@PathVariable Integer id) {
-        Factura factura = service.getById(id);
-        return factura != null ? ResponseEntity.ok(factura) : ResponseEntity.notFound().build();
-    }
-
-    @GetMapping("/usuario/{usuarioId}")
-    public ResponseEntity<List<Factura>> getByUsuario(@PathVariable Integer usuarioId) {
-        return ResponseEntity.ok(service.getByUsuario(usuarioId));
-    }
-
-    @GetMapping("/estado/{estado}")
-    public ResponseEntity<List<Factura>> getByEstado(@PathVariable Factura.EstadoFactura estado) {
-        return ResponseEntity.ok(service.getByEstado(estado));
-    }
-
-    /* ───────────────────────────────────────────────
-       🧾 CREAR FACTURA (manual o automática)
-    ─────────────────────────────────────────────── */
+    // 🔹 2. Crear nueva factura
     @PostMapping
-    public ResponseEntity<Factura> create(@RequestBody Factura factura) {
-        return ResponseEntity.ok(service.save(factura));
-    }
-
-    /**
-     * 📦 Crear factura desde proceso completado (Mongo)
-     * Se usa cuando una solicitud en Mongo se completa y debe generar factura SQL.
-     */
-    @PostMapping("/generar")
-    public ResponseEntity<Factura> generarFactura(
-            @RequestParam Integer usuarioId,
-            @RequestParam String procesosFacturados,
-            @RequestParam Double monto
-    ) {
-        return ResponseEntity.ok(service.generarFactura(usuarioId, procesosFacturados, monto));
-    }
-
-    /* ───────────────────────────────────────────────
-       💰 MARCAR FACTURA COMO PAGADA
-    ─────────────────────────────────────────────── */
-    @PutMapping("/{id}/pagar")
-    public ResponseEntity<Factura> marcarComoPagada(@PathVariable Integer id) {
-        Factura factura = service.getById(id);
-        if (factura == null) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<?> crearFactura(@RequestBody FacturaCreateRequest req) {
+        if (req.getIdUsuario() == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El campo idUsuario es obligatorio"));
         }
-        service.marcarComoPagada(factura);
-        return ResponseEntity.ok(factura);
+
+        Usuario usuario = usuarioRepository.findById(req.getIdUsuario())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID " + req.getIdUsuario()));
+
+        Factura factura = new Factura();
+        factura.setUsuario(usuario);
+        factura.setTotal(req.getTotal());
+        factura.setDescripcionProceso(req.getDescripcionProceso());
+
+        Factura saved = facturaService.crearFactura(factura);
+
+        FacturaResponse resp = new FacturaResponse(
+                saved.getIdFactura(),
+                saved.getUsuario().getIdUsuario(),
+                saved.getFechaEmision(),
+                saved.getEstado().name(),
+                saved.getTotal(),
+                saved.getDescripcionProceso()
+        );
+
+        return ResponseEntity.ok(resp);
     }
 
-    /* ───────────────────────────────────────────────
-       🧾 ACTUALIZAR FACTURA
-    ─────────────────────────────────────────────── */
-    @PutMapping("/{id}")
-    public ResponseEntity<Factura> update(@PathVariable Integer id, @RequestBody Factura factura) {
-        factura.setIdFactura(id);
-        return ResponseEntity.ok(service.save(factura));
-    }
+    // 🔹 3. Marcar factura como pagada
+    @PutMapping("/{idFactura}/pagar")
+    public ResponseEntity<?> pagarFactura(@PathVariable Integer idFactura) {
+        Factura updated = facturaService.marcarComoPagada(idFactura);
 
-    /* ───────────────────────────────────────────────
-       ❌ ELIMINAR FACTURA
-    ─────────────────────────────────────────────── */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        service.delete(id);
-        return ResponseEntity.noContent().build();
+        FacturaResponse resp = new FacturaResponse(
+                updated.getIdFactura(),
+                updated.getUsuario() != null ? updated.getUsuario().getIdUsuario() : null,
+                updated.getFechaEmision(),
+                updated.getEstado().name(),
+                updated.getTotal(),
+                updated.getDescripcionProceso()
+        );
+
+        return ResponseEntity.ok(resp);
     }
 }
