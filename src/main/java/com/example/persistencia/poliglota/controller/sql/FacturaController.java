@@ -22,22 +22,50 @@ public class FacturaController {
     private final FacturaService facturaService;
     private final UsuarioRepository usuarioRepository;
 
-    // 🔹 1. Listar facturas por usuario
+    /* ───────────────────────────────
+       🔹 1. Listar facturas por usuario
+    ─────────────────────────────── */
     @GetMapping("/{idUsuario}")
     public ResponseEntity<List<FacturaResponse>> listarFacturas(@PathVariable Integer idUsuario) {
         List<Factura> facturas = facturaService.obtenerFacturasPorUsuario(idUsuario);
-        List<FacturaResponse> resp = facturas.stream().map(f -> new FacturaResponse(
-                f.getIdFactura(),
-                f.getUsuario() != null ? f.getUsuario().getIdUsuario() : null,
-                f.getFechaEmision(),
-                f.getEstado().name(),
-                f.getTotal(),
-                f.getDescripcionProceso()
-        )).collect(Collectors.toList());
+
+        List<FacturaResponse> resp = facturas.stream()
+                .map(f -> new FacturaResponse(
+                        f.getIdFactura(),
+                        f.getUsuario() != null ? f.getUsuario().getIdUsuario() : null,
+                        f.getFechaEmision(),
+                        f.getEstado().name(), // ✅ Asegura formato texto: "PENDIENTE", "PAGADA"
+                        f.getTotal(),
+                        f.getDescripcionProceso()
+                ))
+                .collect(Collectors.toList());
+
         return ResponseEntity.ok(resp);
     }
 
-    // 🔹 2. Crear nueva factura
+    /* ───────────────────────────────
+       🧾 (Opcional) Listar todas las facturas del sistema
+       Útil para pruebas o panel admin
+    ─────────────────────────────── */
+    @GetMapping
+    public ResponseEntity<List<FacturaResponse>> listarTodas() {
+        List<Factura> facturas = facturaService.obtenerTodas();
+        List<FacturaResponse> resp = facturas.stream()
+                .map(f -> new FacturaResponse(
+                        f.getIdFactura(),
+                        f.getUsuario() != null ? f.getUsuario().getIdUsuario() : null,
+                        f.getFechaEmision(),
+                        f.getEstado().name(),
+                        f.getTotal(),
+                        f.getDescripcionProceso()
+                ))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(resp);
+    }
+
+    /* ───────────────────────────────
+       💰 2. Crear nueva factura (manual o desde admin)
+    ─────────────────────────────── */
     @PostMapping
     public ResponseEntity<?> crearFactura(@RequestBody FacturaCreateRequest req) {
         if (req.getIdUsuario() == null) {
@@ -66,9 +94,11 @@ public class FacturaController {
         return ResponseEntity.ok(resp);
     }
 
-    // 🔹 3. Marcar factura como pagada
+    /* ───────────────────────────────
+       ✅ 3. Marcar factura como pagada
+    ─────────────────────────────── */
     @PutMapping("/{idFactura}/pagar")
-    public ResponseEntity<?> pagarFactura(@PathVariable Integer idFactura) {
+    public ResponseEntity<FacturaResponse> pagarFactura(@PathVariable Integer idFactura) {
         Factura updated = facturaService.marcarComoPagada(idFactura);
 
         FacturaResponse resp = new FacturaResponse(

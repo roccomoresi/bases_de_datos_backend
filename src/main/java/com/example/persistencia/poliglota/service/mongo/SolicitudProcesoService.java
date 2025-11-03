@@ -1,10 +1,15 @@
 package com.example.persistencia.poliglota.service.mongo;
 
+import com.example.persistencia.poliglota.dto.SolicitudProcesoRequest;
 import com.example.persistencia.poliglota.model.mongo.HistorialEjecucion;
 import com.example.persistencia.poliglota.model.mongo.Proceso;
 import com.example.persistencia.poliglota.model.mongo.SolicitudProceso;
 import com.example.persistencia.poliglota.repository.mongo.ProcesoRepository;
 import com.example.persistencia.poliglota.repository.mongo.SolicitudProcesoRepository;
+import com.example.persistencia.poliglota.service.sql.FacturaService;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.stereotype.Service;
 
 import java.rmi.server.UID;
@@ -19,13 +24,15 @@ public class SolicitudProcesoService {
     private final SolicitudProcesoRepository repository;
     private final ProcesoRepository procesoRepository;
     private final HistorialEjecucionService historialService;
+    private final FacturaService facturaService;
 
     public SolicitudProcesoService(SolicitudProcesoRepository repository,
                                    ProcesoRepository procesoRepository,
-                                   HistorialEjecucionService historialService) {
+                                   HistorialEjecucionService historialService, FacturaService facturaService) {
         this.repository = repository;
         this.procesoRepository = procesoRepository;
         this.historialService = historialService;
+        this.facturaService = facturaService;
     }
 
     /* ───────────────────────────────
@@ -47,16 +54,56 @@ public class SolicitudProcesoService {
         return repository.findByEstadoIgnoreCase(estado);
     }
 
+
+
     /* ───────────────────────────────
        🟢 CREAR SOLICITUD
     ─────────────────────────────── */
-    public SolicitudProceso create(Integer usuarioId, String procesoId) {
+    @Transactional
+public SolicitudProceso create(Integer usuarioId, String procesoId) {
     Proceso proceso = procesoRepository.findById(procesoId)
             .orElseThrow(() -> new RuntimeException("❌ Proceso no encontrado con id: " + procesoId));
 
+    // 🔹 Crear la solicitud en Mongo
     SolicitudProceso solicitud = new SolicitudProceso(usuarioId, proceso);
-    return repository.save(solicitud);
+    solicitud.setEstado("pendiente");
+    solicitud.setResultado("A la espera de pago");
+
+    repository.save(solicitud);
+
+    // 🔹 Crear la factura pendiente en SQL
+    try {
+        facturaService.generarFacturaPendiente(
+        usuarioId,
+        "Solicitud del proceso: " + proceso.getNombre(),
+        proceso.getCosto().doubleValue() // ✅ conversión segura de BigDecimal → Double
+);
+
+        System.out.println("✅ Factura pendiente generada para el proceso " + proceso.getNombre());
+    } catch (Exception e) {
+        System.err.println("⚠️ Error generando factura pendiente: " + e.getMessage());
+    }
+
+    return solicitud;
 }
+
+
+public void completarSolicitudYRegistrarHistorial(SolicitudProceso solicitud, String resultado) {
+    solicitud.setEstado("completado");
+    solicitud.setResultado(resultado);
+    repository.save(solicitud);
+
+    historialService.save(new HistorialEjecucion(
+        solicitud.getProceso().getId(),
+        solicitud.getProceso().getNombre(),
+        solicitud.getUsuarioId(),
+        solicitud.getFechaSolicitud(),
+        LocalDateTime.now(),
+        resultado
+    ));
+}
+
+
 
 
     /* ───────────────────────────────
@@ -90,6 +137,8 @@ public SolicitudProceso updateEstado(UUID id, String estado) {
 
     return solicitud;
 }
+
+
 
 
     /* ───────────────────────────────

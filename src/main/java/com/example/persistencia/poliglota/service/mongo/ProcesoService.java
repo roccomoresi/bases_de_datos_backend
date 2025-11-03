@@ -1,9 +1,11 @@
 package com.example.persistencia.poliglota.service.mongo;
 
+import com.example.persistencia.poliglota.model.mongo.HistorialEjecucion;
 import com.example.persistencia.poliglota.model.mongo.Proceso;
 import com.example.persistencia.poliglota.repository.mongo.ProcesoRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,9 +14,11 @@ import java.util.UUID;
 public class ProcesoService {
 
     private final ProcesoRepository repository;
+    private final HistorialEjecucionService historialService;
 
-    public ProcesoService(ProcesoRepository repository) {
+    public ProcesoService(ProcesoRepository repository, HistorialEjecucionService historialService) {
         this.repository = repository;
+        this.historialService = historialService;
     }
 
     /* ───────────────────────────────
@@ -41,7 +45,7 @@ public class ProcesoService {
     ─────────────────────────────── */
     public Proceso save(Proceso proceso) {
         if (proceso.getId() == null || proceso.getId().isEmpty()) {
-            proceso.setId(UUID.randomUUID().toString()); // ✅ genera String
+            proceso.setId(UUID.randomUUID().toString()); // ✅ genera String UUID
         }
         return repository.save(proceso);
     }
@@ -75,5 +79,29 @@ public class ProcesoService {
             p.setActivo(!p.isActivo());
             return repository.save(p);
         }).orElseThrow(() -> new RuntimeException("Proceso no encontrado"));
+    }
+
+    /* ───────────────────────────────
+       ⚙️ EJECUTAR PROCESO (al pagar)
+    ─────────────────────────────── */
+    public void ejecutarProceso(String procesoId) {
+        Proceso proceso = repository.findById(procesoId)
+                .orElseThrow(() -> new RuntimeException("❌ Proceso no encontrado: " + procesoId));
+
+        // ⚙️ Simulación de ejecución (en tu caso, podrías conectar con Cassandra)
+        String resultado = "Ejecución automática del proceso: " + proceso.getNombre();
+
+        // 🕓 Registrar en el historial de ejecuciones
+        HistorialEjecucion log = new HistorialEjecucion();
+        log.setProcesoId(proceso.getId());
+        log.setNombreProceso(proceso.getNombre());
+        log.setUsuarioId(null); // si querés, podés pasar el usuario
+        log.setFechaInicio(LocalDateTime.now());
+        log.setFechaFin(LocalDateTime.now());
+        log.setResultado(resultado);
+
+        historialService.save(log);
+
+        System.out.println("✅ Proceso ejecutado automáticamente: " + proceso.getNombre());
     }
 }
