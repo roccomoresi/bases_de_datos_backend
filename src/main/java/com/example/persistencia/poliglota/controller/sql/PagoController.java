@@ -1,6 +1,7 @@
 package com.example.persistencia.poliglota.controller.sql;
 
 import com.example.persistencia.poliglota.dto.PagoRequest;
+import com.example.persistencia.poliglota.dto.PagoResponse;
 import com.example.persistencia.poliglota.model.sql.Pago;
 import com.example.persistencia.poliglota.service.sql.PagoService;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -42,13 +44,23 @@ public class PagoController {
                     request.getMetodoPago()
             );
 
-            return ResponseEntity.ok(pagoGuardado);
+            // ✅ Devolvemos una respuesta simplificada (sin bucles infinitos)
+            PagoResponse response = new PagoResponse(
+                    pagoGuardado.getIdPago(),
+                    pagoGuardado.getMetodoPago(),
+                    pagoGuardado.getMontoPagado(),
+                    pagoGuardado.getFactura().getIdFactura(),
+                    pagoGuardado.getFactura().getEstado().name(),
+                    pagoGuardado.getFactura().getDescripcionProceso()
+            );
+
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
             log.error("❌ Error al registrar el pago: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body(
-                    java.util.Map.of("error", "Error al registrar el pago", "detalle", e.getMessage())
+                    Map.of("error", "Error al registrar el pago", "detalle", e.getMessage())
             );
         }
     }
 }
-

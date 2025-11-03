@@ -1,8 +1,8 @@
 package com.example.persistencia.poliglota.model.sql;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "pago")
@@ -18,12 +18,10 @@ public class Pago {
     @Column(name = "id_pago")
     private Integer idPago;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "id_factura", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "factura_id", nullable = false)
+    @JsonBackReference  // 🔹 evita recursión infinita hacia Factura
     private Factura factura;
-
-    @Column(name = "fecha_pago", nullable = false)
-    private LocalDateTime fechaPago = LocalDateTime.now();
 
     @Column(name = "monto_pagado", nullable = false)
     private Double montoPagado;
