@@ -1,10 +1,14 @@
 package com.example.persistencia.poliglota.controller.mongo;
 
 import com.example.persistencia.poliglota.service.mongo.ProcesoExecutorService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/procesos")
@@ -16,12 +20,55 @@ public class ProcesoExecutorController {
         this.executorService = executorService;
     }
 
+    /**
+     * Ejecuta un proceso en Mongo y genera la factura en SQL.
+     * Ejemplo:
+     * POST /api/procesos/ejecutar?usuarioId=1&procesoId=a542b825-f7c7-48b3-bd33-5e044dad48c5
+     */
     @PostMapping("/ejecutar")
-    public ResponseEntity<String> ejecutar(
+    public ResponseEntity<Map<String, Object>> ejecutar(
             @RequestParam Integer usuarioId,
             @RequestParam String procesoId
     ) {
-        String resultado = executorService.ejecutarProceso(usuarioId, procesoId);
-        return ResponseEntity.ok(resultado);
+        try {
+            // El service DEBE devolver Map<String,Object>
+            Map<String, Object> body = executorService.ejecutarProceso(usuarioId, procesoId);
+
+            // Enriquecemos la respuesta con metadatos útiles
+            body.put("usuarioId", usuarioId);
+            body.put("procesoId", procesoId);
+            body.putIfAbsent("status", "OK");
+            body.put("timestamp", LocalDateTime.now());
+
+            return ResponseEntity.ok(body);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(error("Parámetros inválidos", e.getMessage()));
+        } catch (RuntimeException e) {
+            HttpStatus status = e.getMessage() != null &&
+                    e.getMessage().toLowerCase().contains("no encontrado")
+                    ? HttpStatus.NOT_FOUND
+                    : HttpStatus.INTERNAL_SERVER_ERROR;
+
+            return ResponseEntity.status(status)
+                    .body(error("Error al ejecutar proceso", e.getMessage()));
+        }
+    }
+
+    /** Maneja errores por parámetros faltantes (?usuarioId / ?procesoId) */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Map<String, Object>> handleMissingParams(MissingServletRequestParameterException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(error("Falta parámetro requerido", ex.getParameterName()));
+    }
+
+    // Helper para formato de error
+    private Map<String, Object> error(String titulo, String detalle) {
+        Map<String, Object> err = new HashMap<>();
+        err.put("error", titulo);
+        err.put("detalle", detalle);
+        err.put("timestamp", LocalDateTime.now());
+        return err;
     }
 }

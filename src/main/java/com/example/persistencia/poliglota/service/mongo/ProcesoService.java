@@ -2,24 +2,21 @@ package com.example.persistencia.poliglota.service.mongo;
 
 import com.example.persistencia.poliglota.model.mongo.Proceso;
 import com.example.persistencia.poliglota.repository.mongo.ProcesoRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class ProcesoService {
 
     private final ProcesoRepository repository;
 
-    public ProcesoService(ProcesoRepository repository) {
-        this.repository = repository;
-    }
-
-    /* ───────────────────────────────
-       📋 LISTAR Y BUSCAR
-    ─────────────────────────────── */
+    /* ───────── LISTAR / BUSCAR ───────── */
     public List<Proceso> getAll() {
         return repository.findAll();
     }
@@ -28,52 +25,55 @@ public class ProcesoService {
         return repository.findByActivoTrue();
     }
 
-    public Optional<Proceso> getById(String id) {
-        return repository.findById(id);
+    /** Obtiene o lanza 404 */
+    public Proceso obtenerPorId(String id) {
+        return repository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Proceso no encontrado: " + id));
     }
 
     public List<Proceso> getByTipo(String tipo) {
         return repository.findByTipoIgnoreCase(tipo);
     }
 
-    /* ───────────────────────────────
-       💾 CREAR O GUARDAR
-    ─────────────────────────────── */
+    /* ───────── CREAR / GUARDAR ───────── */
     public Proceso save(Proceso proceso) {
         if (proceso.getId() == null || proceso.getId().isEmpty()) {
-            proceso.setId(UUID.randomUUID().toString()); // ✅ genera String
+            proceso.setId(UUID.randomUUID().toString());   // id String
         }
         return repository.save(proceso);
     }
 
-    /* ───────────────────────────────
-       ✏️ ACTUALIZAR
-    ─────────────────────────────── */
+    /* ───────── ACTUALIZAR ─────────
+       Nota: como 'activo' es primitive boolean (no puede ser null),
+       por defecto NO lo tocamos acá; para eso dejamos toggleEstado().
+     */
     public Proceso update(String id, Proceso updated) {
-        return repository.findById(id).map(p -> {
-            p.setNombre(updated.getNombre());
-            p.setDescripcion(updated.getDescripcion());
-            p.setTipo(updated.getTipo());
-            p.setCosto(updated.getCosto());
-            p.setActivo(updated.isActivo());
-            return repository.save(p);
-        }).orElseThrow(() -> new RuntimeException("Proceso no encontrado"));
+        Proceso p = obtenerPorId(id);
+
+        if (updated.getNombre() != null)      p.setNombre(updated.getNombre());
+        if (updated.getDescripcion() != null) p.setDescripcion(updated.getDescripcion());
+        if (updated.getTipo() != null)        p.setTipo(updated.getTipo());
+        if (updated.getCosto() != null)       p.setCosto(updated.getCosto());
+
+        // Si también querés permitir actualizar 'activo' acá, descomentá:
+        // p.setActivo(updated.isActivo());
+
+        return repository.save(p);
     }
 
-    /* ───────────────────────────────
-       ❌ ELIMINAR
-    ─────────────────────────────── */
+    /* ───────── ELIMINAR ───────── */
     public void delete(String id) {
+        if (!repository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Proceso no encontrado: " + id);
+        }
         repository.deleteById(id);
     }
 
-    /* ───────────────────────────────
-       🔄 ACTIVAR / DESACTIVAR
-    ─────────────────────────────── */
+    /* ───────── ACTIVAR / DESACTIVAR ───────── */
     public Proceso toggleEstado(String id) {
-        return repository.findById(id).map(p -> {
-            p.setActivo(!p.isActivo());
-            return repository.save(p);
-        }).orElseThrow(() -> new RuntimeException("Proceso no encontrado"));
+        Proceso p = obtenerPorId(id);
+        p.setActivo(!p.isActivo());
+        return repository.save(p);
     }
 }

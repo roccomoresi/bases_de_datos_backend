@@ -10,7 +10,8 @@ import com.example.persistencia.poliglota.service.sql.FacturaService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class ProcesoExecutorService {
@@ -35,66 +36,80 @@ public class ProcesoExecutorService {
         this.facturaService = facturaService;
     }
 
-    public String ejecutarProceso(Integer usuarioId, String procesoId) {
+    /**
+     * Ejecuta el proceso (Mongo) y genera la factura (SQL).
+     * Devuelve un Map<String,Object> para que el controller responda en JSON.
+     */
+    public Map<String, Object> ejecutarProceso(Integer usuarioId, String procesoId) {
+        // 1) Buscar proceso
         Proceso proceso = procesoRepo.findById(procesoId)
                 .orElseThrow(() -> new RuntimeException("Proceso no encontrado"));
 
-        // 🟢 1. Crear solicitud
+        // 2) Crear solicitud
         SolicitudProceso solicitud = new SolicitudProceso(usuarioId, proceso);
         solicitud.setEstado("en_progreso");
         solicitudRepo.save(solicitud);
 
-        // 🟠 2. Ejecutar proceso (según tipo)
+        // 3) Ejecutar lógica según el tipo de proceso
         String resultado;
-        switch (proceso.getTipo().toLowerCase()) {
+        String tipo = proceso.getTipo() != null ? proceso.getTipo().toLowerCase() : "";
+        switch (tipo) {
             case "informe":
                 resultado = generarInformeClimatico();
                 break;
             case "alerta":
-                resultado = "🔔 Se ejecutó la verificación de alertas.";
+                resultado = "Se ejecutó la verificación de alertas.";
                 break;
             case "servicio":
-                resultado = "⚙️ Servicio ejecutado correctamente.";
+                resultado = "Servicio ejecutado correctamente.";
                 break;
             default:
-                resultado = "✅ Proceso ejecutado sin acciones adicionales.";
+                resultado = "Proceso ejecutado sin acciones adicionales.";
         }
 
-        // 🔵 3. Actualizar solicitud y registrar historial
+        // 4) Actualizar solicitud y registrar historial
         solicitud.setResultado(resultado);
         solicitud.setEstado("completado");
         solicitudRepo.save(solicitud);
 
         HistorialEjecucion log = new HistorialEjecucion(
-    proceso.getId(),                // 🔹 ahora es String
-    proceso.getNombre(),
-    usuarioId,                      // 🔹 Integer (del usuario SQL)
-    solicitud.getFechaSolicitud(),  // 🔹 fechaInicio
-    LocalDateTime.now(),            // 🔹 fechaFin
-    resultado                       // 🔹 texto del resultado del proceso
-);
-historialService.save(log);
+                proceso.getId(),               // id del proceso (String)
+                proceso.getNombre(),
+                usuarioId,                     // usuario SQL (Integer)
+                solicitud.getFechaSolicitud(), // inicio
+                LocalDateTime.now(),           // fin
+                resultado
+        );
+        historialService.save(log); // (una sola vez)
 
-
-        historialService.save(log);
-
-        // 🧾 4. Generar factura SQL
+        // 5) Generar factura en SQL (null-safe)
+        double monto = proceso.getCosto() != null ? proceso.getCosto() : 0.0;
         facturaService.generarFactura(
                 usuarioId,
                 proceso.getNombre(),
-                proceso.getCosto().doubleValue()
+                monto
         );
 
-        return resultado;
+        // 6) Armar respuesta
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("status", "OK");
+        resp.put("mensaje", "Proceso ejecutado y factura generada correctamente");
+        resp.put("usuarioId", usuarioId);
+        resp.put("procesoId", procesoId);
+        resp.put("nombreProceso", proceso.getNombre());
+        resp.put("montoFacturado", monto);
+        resp.put("resultado", resultado);
+        resp.put("solicitudId", solicitud.getId()); // si tu SolicitudProceso tiene id
+        resp.put("timestamp", LocalDateTime.now());
+        return resp;
     }
 
     private String generarInformeClimatico() {
-        // 🔹 Ejemplo: leer Cassandra y calcular promedio de temperatura global
         var datos = medicionService.obtenerPorPais("Argentina");
         double promedio = datos.stream()
                 .mapToDouble(m -> m.getTemperatura() != null ? m.getTemperatura() : 0)
                 .average()
                 .orElse(0);
-        return "🌎 Temperatura promedio en Argentina: " + String.format("%.2f", promedio) + "°C";
+        return "Temperatura promedio en Argentina: " + String.format("%.2f", promedio) + "°C";
     }
 }
