@@ -54,57 +54,49 @@ public class AuthController {
     /* ───────────────────────────────
        🔐 LOGIN
     ─────────────────────────────── */
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest req) {
-        
-            System.out.println("🟡 Email recibido: " + req.getEmail());
-            System.out.println("🟡 Password recibido: " + req.getPassword());
+   @PostMapping("/login")
+public ResponseEntity<?> login(@RequestBody LoginRequest req) {
 
-        Optional<Usuario> opt = usuarioService.buscarPorEmail(req.getEmail());
-        if (opt.isEmpty()) {
-            return ResponseEntity.status(401).body("Email no registrado");
-        }
-
-        
-
-        Usuario u = opt.get();
-
-        Sesion sesion = sesionService.registrarInicioSesion(u.getIdUsuario());
-
-        boolean passwordOk;
-
-
-
-
-        if (u.getContrasena() != null && (
-                u.getContrasena().startsWith("$2a$") ||
-                u.getContrasena().startsWith("$2b$") ||
-                u.getContrasena().startsWith("$2y$")
-        )) {
-            // BCrypt
-            passwordOk = encoder.matches(req.getPassword(), u.getContrasena());
-        } else {
-            // Contraseña plana
-            passwordOk = Objects.equals(req.getPassword(), u.getContrasena());
-        }
-
-        if (!passwordOk) {
-            return ResponseEntity.status(401).body("Contraseña incorrecta");
-        }
-
-        // Normalizamos el rol
-        String rolDesc = (u.getRol() != null ? u.getRol().getDescripcion() : "USUARIO");
-        String springRole = switch (rolDesc.trim().toUpperCase()) {
-            case "ADMIN" -> "ROLE_ADMIN";
-            case "TECNICO" -> "ROLE_TECNICO";
-            default -> "ROLE_USUARIO";
-        };
-
-        // Generamos el token JWT
-        String token = jwtService.generarToken(u.getEmail(), springRole);
-
-        return ResponseEntity.ok(new AuthResponse(token, u));
+    Optional<Usuario> opt = usuarioService.buscarPorEmail(req.getEmail());
+    if (opt.isEmpty()) {
+        return ResponseEntity.status(401).body("Email no registrado");
     }
+
+    Usuario u = opt.get();
+
+    boolean passwordOk;
+    if (u.getContrasena() != null && (
+            u.getContrasena().startsWith("$2a$") ||
+            u.getContrasena().startsWith("$2b$") ||
+            u.getContrasena().startsWith("$2y$")
+    )) {
+        // BCrypt
+        passwordOk = encoder.matches(req.getPassword(), u.getContrasena());
+    } else {
+        // Contraseña plana
+        passwordOk = Objects.equals(req.getPassword(), u.getContrasena());
+    }
+
+    if (!passwordOk) {
+        return ResponseEntity.status(401).body("Contraseña incorrecta");
+    }
+
+    // ✅ Primero determinamos el rol del usuario
+    String rolDesc = (u.getRol() != null ? u.getRol().getDescripcion() : "USUARIO");
+    String springRole = switch (rolDesc.trim().toUpperCase()) {
+        case "ADMIN" -> "ROLE_ADMIN";
+        case "TECNICO" -> "ROLE_TECNICO";
+        default -> "ROLE_USUARIO";
+    };
+
+    // ✅ Ahora registramos la sesión con el rol correcto
+    Sesion sesion = sesionService.registrarInicioSesion(u.getIdUsuario(), rolDesc);
+
+    // ✅ Luego generamos el token JWT con el rol de Spring
+    String token = jwtService.generarToken(u.getEmail(), springRole);
+
+    return ResponseEntity.ok(new AuthResponse(token, u));
+}
 
     /* ───────────────────────────────
    🚪 LOGOUT

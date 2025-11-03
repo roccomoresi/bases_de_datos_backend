@@ -6,6 +6,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface SolicitudProcesoRepository extends MongoRepository<SolicitudProceso, UUID> {
-    List<SolicitudProceso> findByUsuarioId(UUID usuarioId);
+    List<SolicitudProceso> findByUsuarioId(Integer usuarioId);
     List<SolicitudProceso> findByEstadoIgnoreCase(String estado);
 }

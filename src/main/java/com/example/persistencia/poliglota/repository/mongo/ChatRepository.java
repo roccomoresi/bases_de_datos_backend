@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface ChatRepository extends MongoRepository<Chat, String> {
     List<Chat> findByParticipantesContaining(String usuarioId);
+    List<Chat> findAllByOrderByUltimaActualizacionDesc();
 }

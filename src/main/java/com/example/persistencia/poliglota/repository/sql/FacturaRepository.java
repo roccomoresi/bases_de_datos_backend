@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface FacturaRepository extends JpaRepository<Factura, Integer> {
     List<Factura> findByUsuario_IdUsuario(Integer usuarioId);
+    List<Factura> findByEstado(Factura.EstadoFactura estado);
 }

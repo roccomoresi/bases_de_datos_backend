@@ -11,19 +11,19 @@ public class HistorialEjecucion {
 
     @Id
     private UUID id;
-    private UUID procesoId;
+    private String procesoId;
     private String nombreProceso;
-    private UUID usuarioId;
+    private Integer usuarioId;
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaFin;
     private long duracionSegundos;
     private String resultado;
 
-    public HistorialEjecucion() {
+     public HistorialEjecucion() {
         this.id = UUID.randomUUID();
     }
 
-    public HistorialEjecucion(UUID procesoId, String nombreProceso, UUID usuarioId,
+    public HistorialEjecucion(String procesoId, String nombreProceso, Integer usuarioId,
                               LocalDateTime fechaInicio, LocalDateTime fechaFin, String resultado) {
         this.id = UUID.randomUUID();
         this.procesoId = procesoId;
@@ -38,12 +38,12 @@ public class HistorialEjecucion {
 
     // Getters y setters
     public UUID getId() { return id; }
-    public UUID getProcesoId() { return procesoId; }
-    public void setProcesoId(UUID procesoId) { this.procesoId = procesoId; }
+    public String getProcesoId() { return procesoId; }
+    public void setProcesoId(String procesoId) { this.procesoId = procesoId; }
     public String getNombreProceso() { return nombreProceso; }
     public void setNombreProceso(String nombreProceso) { this.nombreProceso = nombreProceso; }
-    public UUID getUsuarioId() { return usuarioId; }
-    public void setUsuarioId(UUID usuarioId) { this.usuarioId = usuarioId; }
+    public Integer getUsuarioId() { return usuarioId; }
+    public void setUsuarioId(Integer usuarioId) { this.usuarioId = usuarioId; }
     public LocalDateTime getFechaInicio() { return fechaInicio; }
     public void setFechaInicio(LocalDateTime fechaInicio) { this.fechaInicio = fechaInicio; }
     public LocalDateTime getFechaFin() { return fechaFin; }

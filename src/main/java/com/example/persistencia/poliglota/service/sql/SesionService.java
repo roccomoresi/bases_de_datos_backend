@@ -21,19 +21,21 @@ public class SesionService {
     return repository.findByUsuario_IdUsuario(usuarioId);
 }
 
-  /* 📅 Registrar inicio de sesión */
-    public Sesion registrarInicioSesion(Integer usuarioId) {
-        Sesion sesion = new Sesion();
-        sesion.setFechaInicio(LocalDateTime.now());
-        sesion.setEstado("activa");
+/* 📅 Registrar inicio de sesión */
+public Sesion registrarInicioSesion(Integer usuarioId, String rolDescripcion) {
+    Sesion sesion = new Sesion();
+    sesion.setFechaInicio(LocalDateTime.now());
+    sesion.setEstado("activa");
+    sesion.setRol(rolDescripcion.toUpperCase()); // ⚡ ahora seteamos el rol
 
-        // vincular con usuario sin tener que cargarlo completo
-        var usuario = new com.example.persistencia.poliglota.model.sql.Usuario();
-        usuario.setIdUsuario(usuarioId);
-        sesion.setUsuario(usuario);
+    var usuario = new com.example.persistencia.poliglota.model.sql.Usuario();
+    usuario.setIdUsuario(usuarioId);
+    sesion.setUsuario(usuario);
 
-        return repository.save(sesion);
-    }
+    return repository.save(sesion);
+}
+
+
 
      /* 🚪 Registrar cierre de sesión */
     public void cerrarSesion(Integer idSesion) {

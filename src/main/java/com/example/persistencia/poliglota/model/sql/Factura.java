@@ -2,6 +2,8 @@ package com.example.persistencia.poliglota.model.sql;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import com.example.persistencia.poliglota.model.sql.Usuario;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,44 +17,49 @@ public class Factura {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idFactura;
 
-    private Double monto;
+    private Double montoTotal = 0.0;
+
     private LocalDateTime fechaEmision = LocalDateTime.now();
 
-    // 👇 Relación con la tabla usuario
+    @Enumerated(EnumType.STRING)
+    private EstadoFactura estado = EstadoFactura.pendiente;
+
+    public enum EstadoFactura {
+        pendiente, pagada, vencida
+    }
+
+    // 🔹 Relación con Usuario
     @ManyToOne
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
 
+    // 🔹 Relación con Pagos
+    @OneToMany(mappedBy = "factura", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Pago> pagos;
+
+    // 🔹 Relación con procesos facturados (vinculación lógica con Mongo)
+    private String procesosFacturados; 
+    // Podés guardar IDs de procesos o nombres concatenados, por ejemplo: "informe-01, alerta-02"
+
     // Getters y Setters
-    public Integer getIdFactura() {
-        return idFactura;
-    }
+    public Integer getIdFactura() { return idFactura; }
+    public void setIdFactura(Integer idFactura) { this.idFactura = idFactura; }
 
-    public void setIdFactura(Integer idFactura) {
-        this.idFactura = idFactura;
-    }
+    public Double getMontoTotal() { return montoTotal; }
+    public void setMontoTotal(Double montoTotal) { this.montoTotal = montoTotal; }
 
-    public Double getMonto() {
-        return monto;
-    }
+    public LocalDateTime getFechaEmision() { return fechaEmision; }
+    public void setFechaEmision(LocalDateTime fechaEmision) { this.fechaEmision = fechaEmision; }
 
-    public void setMonto(Double monto) {
-        this.monto = monto;
-    }
+    public EstadoFactura getEstado() { return estado; }
+    public void setEstado(EstadoFactura estado) { this.estado = estado; }
 
-    public LocalDateTime getFechaEmision() {
-        return fechaEmision;
-    }
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
 
-    public void setFechaEmision(LocalDateTime fechaEmision) {
-        this.fechaEmision = fechaEmision;
-    }
+    public List<Pago> getPagos() { return pagos; }
+    public void setPagos(List<Pago> pagos) { this.pagos = pagos; }
 
-    public Usuario getUsuario() {
-        return usuario;
-    }
-
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
-    }
+    public String getProcesosFacturados() { return procesosFacturados; }
+    public void setProcesosFacturados(String procesosFacturados) { this.procesosFacturados = procesosFacturados; }
 }

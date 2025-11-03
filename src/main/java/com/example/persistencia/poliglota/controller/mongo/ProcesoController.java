@@ -4,8 +4,8 @@ import com.example.persistencia.poliglota.model.mongo.Proceso;
 import com.example.persistencia.poliglota.service.mongo.ProcesoService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/mongo/procesos")
@@ -28,7 +28,7 @@ public class ProcesoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Proceso> getById(@PathVariable UUID id) {
+    public ResponseEntity<Proceso> getById(@PathVariable String id) {
         return service.getById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -45,17 +45,17 @@ public class ProcesoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Proceso> update(@PathVariable UUID id, @RequestBody Proceso proceso) {
+    public ResponseEntity<Proceso> update(@PathVariable String id, @RequestBody Proceso proceso) {
         return ResponseEntity.ok(service.update(id, proceso));
     }
 
     @PutMapping("/{id}/toggle")
-    public ResponseEntity<Proceso> toggleEstado(@PathVariable UUID id) {
+    public ResponseEntity<Proceso> toggleEstado(@PathVariable String id) {
         return ResponseEntity.ok(service.toggleEstado(id));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }

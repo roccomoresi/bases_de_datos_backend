@@ -6,6 +6,10 @@ import java.util.List;
 import java.util.UUID;
 
 public interface HistorialEjecucionRepository extends MongoRepository<HistorialEjecucion, UUID> {
-    List<HistorialEjecucion> findByUsuarioId(UUID usuarioId);
-    List<HistorialEjecucion> findByProcesoId(UUID procesoId);
+
+    // 🔹 Busca por usuario SQL (id entero)
+    List<HistorialEjecucion> findByUsuarioId(Integer usuarioId);
+
+    // 🔹 Busca por proceso Mongo (id string)
+    List<HistorialEjecucion> findByProcesoId(String procesoId);
 }

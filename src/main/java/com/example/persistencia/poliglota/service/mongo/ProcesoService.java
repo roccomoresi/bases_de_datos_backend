@@ -3,6 +3,7 @@ package com.example.persistencia.poliglota.service.mongo;
 import com.example.persistencia.poliglota.model.mongo.Proceso;
 import com.example.persistencia.poliglota.repository.mongo.ProcesoRepository;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,6 +17,9 @@ public class ProcesoService {
         this.repository = repository;
     }
 
+    /* ───────────────────────────────
+       📋 LISTAR Y BUSCAR
+    ─────────────────────────────── */
     public List<Proceso> getAll() {
         return repository.findAll();
     }
@@ -24,7 +28,7 @@ public class ProcesoService {
         return repository.findByActivoTrue();
     }
 
-    public Optional<Proceso> getById(UUID id) {
+    public Optional<Proceso> getById(String id) {
         return repository.findById(id);
     }
 
@@ -32,14 +36,20 @@ public class ProcesoService {
         return repository.findByTipoIgnoreCase(tipo);
     }
 
+    /* ───────────────────────────────
+       💾 CREAR O GUARDAR
+    ─────────────────────────────── */
     public Proceso save(Proceso proceso) {
-        if (proceso.getId() == null) {
-            proceso.setId(UUID.randomUUID());
+        if (proceso.getId() == null || proceso.getId().isEmpty()) {
+            proceso.setId(UUID.randomUUID().toString()); // ✅ genera String
         }
         return repository.save(proceso);
     }
 
-    public Proceso update(UUID id, Proceso updated) {
+    /* ───────────────────────────────
+       ✏️ ACTUALIZAR
+    ─────────────────────────────── */
+    public Proceso update(String id, Proceso updated) {
         return repository.findById(id).map(p -> {
             p.setNombre(updated.getNombre());
             p.setDescripcion(updated.getDescripcion());
@@ -50,11 +60,17 @@ public class ProcesoService {
         }).orElseThrow(() -> new RuntimeException("Proceso no encontrado"));
     }
 
-    public void delete(UUID id) {
+    /* ───────────────────────────────
+       ❌ ELIMINAR
+    ─────────────────────────────── */
+    public void delete(String id) {
         repository.deleteById(id);
     }
 
-    public Proceso toggleEstado(UUID id) {
+    /* ───────────────────────────────
+       🔄 ACTIVAR / DESACTIVAR
+    ─────────────────────────────── */
+    public Proceso toggleEstado(String id) {
         return repository.findById(id).map(p -> {
             p.setActivo(!p.isActivo());
             return repository.save(p);
