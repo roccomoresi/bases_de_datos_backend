@@ -1,4 +1,4 @@
-package com.example.persistencia.poliglota.config;
+package com.example.persistencia.poliglota.config.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
