@@ -31,7 +31,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Usa el CORS que definimos abajo
+                // Usa el CORS definido abajo
                 .cors(c -> c.configurationSource(corsConfigurationSource()))
                 // APIs REST: sin CSRF
                 .csrf(csrf -> csrf.disable())
@@ -51,17 +51,21 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        // 👇 si querés permitir todo, podrías usar setAllowedOriginPatterns(List.of("*"))
-        cfg.setAllowedOrigins(List.of("http://localhost:5173"));
+
+        // Permitir el front en 5173 y 5174 (Vite puede cambiar de puerto)
+        cfg.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "http://localhost:5174"
+        ));
+
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
-        cfg.setAllowCredentials(true);   // déjalo true si usás cookies/Authorization
+        cfg.setAllowCredentials(true);         // si usás cookies/Authorization
         cfg.setExposedHeaders(List.of("Location"));
         cfg.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // 👇 ¡El punto crítico! Debe ser "/**" para que aplique a todos los endpoints
-        source.registerCorsConfiguration("/**", cfg);
+        source.registerCorsConfiguration("/**", cfg); // aplica a todos los endpoints
         return source;
     }
 
