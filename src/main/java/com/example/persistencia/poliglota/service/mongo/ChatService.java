@@ -97,8 +97,12 @@ public class ChatService {
         return chats.stream().map(chat -> {
             Map<String, Object> resumen = new HashMap<>();
             resumen.put("idChat", chat.getId());
-            resumen.put("tipo", chat.getTipo());
-            resumen.put("nombre", chat.getTipo().equals("grupo")
+
+            // Evita NullPointerException si tipo es null
+            String tipo = chat.getTipo() != null ? chat.getTipo() : "desconocido";
+            resumen.put("tipo", tipo);
+
+            resumen.put("nombre", "grupo".equals(tipo)
                     ? chat.getNombreGrupo()
                     : String.join(", ", chat.getParticipantes()));
             resumen.put("ultimaActualizacion", chat.getUltimaActualizacion());
@@ -117,6 +121,7 @@ public class ChatService {
             return resumen;
         }).collect(Collectors.toList());
     }
+
     // 🗑️ Eliminar un chat por ID
     public void eliminarChat(String chatId) {
         if (!repository.existsById(chatId)) {
