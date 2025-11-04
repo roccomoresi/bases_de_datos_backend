@@ -24,14 +24,18 @@ public class CuentaCorrienteService {
                     c.setUsuario(usuario);
                     c.setSaldo(100000.0);
 
-                    movimientoCuentaService.registrarMovimiento(
-    c,
-    "Saldo inicial asignado para pruebas",
-    100000.0,
-    MovimientoCuenta.TipoMovimiento.CREDITO
-);
+                    // Primero persistimos la cuenta para evitar referencias transientes
+                    CuentaCorriente saved = cuentaCorrienteRepository.save(c);
 
-                    return cuentaCorrienteRepository.save(c);
+                    // Registrar el saldo inicial como CREDITO
+                    movimientoCuentaService.registrarMovimiento(
+                            saved,
+                            "Saldo inicial asignado para pruebas",
+                            100000.0,
+                            MovimientoCuenta.TipoMovimiento.CREDITO
+                    );
+
+                    return saved;
                 });
     }
 

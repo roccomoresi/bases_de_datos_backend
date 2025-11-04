@@ -17,6 +17,20 @@ public class PagoController {
 
     private final PagoService pagoService;
 
+    @GetMapping
+    public ResponseEntity<java.util.List<PagoResponse>> listarPagos() {
+        var pagos = pagoService.obtenerTodos();
+        var resp = pagos.stream().map(pago -> new PagoResponse(
+                pago.getIdPago(),
+                pago.getFactura().getIdFactura(),
+                pago.getFactura().getUsuario().getIdUsuario(),
+                pago.getMetodoPago(),
+                pago.getMontoPagado(),
+                pago.getFechaPago().toString()
+        )).toList();
+        return ResponseEntity.ok(resp);
+    }
+
     @PostMapping
     public ResponseEntity<?> registrarPago(@RequestBody PagoRequest request) {
         log.info("💳 Registrando pago de factura ID {} por ${} ({})",

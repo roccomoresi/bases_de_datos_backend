@@ -6,6 +6,8 @@ import com.example.persistencia.poliglota.model.sql.Factura;
 import com.example.persistencia.poliglota.model.sql.Usuario;
 import com.example.persistencia.poliglota.repository.sql.UsuarioRepository;
 import com.example.persistencia.poliglota.service.sql.FacturaService;
+import com.example.persistencia.poliglota.repository.sql.FacturaRepository;
+import com.example.persistencia.poliglota.service.sql.PagoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +22,9 @@ import java.util.stream.Collectors;
 public class FacturaController {
 
     private final FacturaService facturaService;
+    private final PagoService pagoService;
     private final UsuarioRepository usuarioRepository;
+    private final FacturaRepository facturaRepository;
 
     /* ───────────────────────────────
        🔹 1. Listar facturas por usuario
@@ -99,7 +103,15 @@ public class FacturaController {
     ─────────────────────────────── */
     @PutMapping("/{idFactura}/pagar")
     public ResponseEntity<FacturaResponse> pagarFactura(@PathVariable Integer idFactura) {
-        Factura updated = facturaService.marcarComoPagada(idFactura);
+        Factura factura = facturaRepository.findById(idFactura)
+                .orElseThrow(() -> new RuntimeException("Factura no encontrada"));
+
+        // Registrar pago por el total con método MANUAL
+        pagoService.registrarPago(idFactura, factura.getTotal(), "MANUAL");
+
+        // Obtener estado actualizado
+        Factura updated = facturaRepository.findById(idFactura)
+                .orElseThrow(() -> new RuntimeException("Factura no encontrada tras pago"));
 
         FacturaResponse resp = new FacturaResponse(
                 updated.getIdFactura(),

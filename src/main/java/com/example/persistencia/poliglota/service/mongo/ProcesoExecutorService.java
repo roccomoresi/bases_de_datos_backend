@@ -67,8 +67,8 @@ public class ProcesoExecutorService {
         );
         historialService.save(log);
 
-        // 🧾 4. Facturar el proceso
-        facturaService.generarFactura(usuarioId, proceso.getNombre(), proceso.getCosto().doubleValue());
+        // 🧾 4. Facturar el proceso como PENDIENTE (sin impacto contable inmediato)
+        facturaService.generarFacturaPendiente(usuarioId, proceso.getNombre(), proceso.getCosto().doubleValue());
 
         // 🟣 5. Marcar solicitud como completada
         solicitud.setResultado(resultado);

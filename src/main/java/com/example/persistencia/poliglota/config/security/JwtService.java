@@ -4,23 +4,20 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
 import com.example.persistencia.poliglota.model.sql.Usuario;
 
+import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.function.Function;
-
-import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret}") // podés moverla a application.properties
+    @Value("${jwt.secret}")
     private String secretKey;
 
     private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 24; // 24 horas
@@ -28,29 +25,39 @@ public class JwtService {
     /* ───────────────────────────────
        🔐 GENERAR TOKEN
     ─────────────────────────────── */
-public String generarToken(Usuario usuario) {
-    // Normaliza el rol a formato ROLE_*
-    String formattedRole = usuario.getRol() != null && !usuario.getRol().getDescripcion().startsWith("ROLE_")
-            ? "ROLE_" + usuario.getRol().getDescripcion().toUpperCase()
-            : usuario.getRol().getDescripcion();
+    public String generarToken(Usuario usuario) {
+        String descripcion = usuario.getRol() != null
+                ? usuario.getRol().getDescripcion().toUpperCase()
+                : "USUARIO";
 
-    return Jwts.builder()
-            .setSubject(usuario.getEmail()) // 👈 email
-            .claim("rol", formattedRole)     // 👈 rol
-            .claim("id_usuario", usuario.getIdUsuario()) // 👈 NUEVO: ID DEL USUARIO
-            .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-            .signWith(SignatureAlgorithm.HS256, secretKey.getBytes())
-            .compact();
-}
+        // 👇 Normaliza los roles al formato estándar de Spring
+        String formattedRole = switch (descripcion) {
+            case "ADMIN", "ADMINISTRADOR" -> "ROLE_ADMIN";
+            case "TECNICO", "TÉCNICO" -> "ROLE_TECNICO";
+            default -> "ROLE_USUARIO";
+        };
 
+        return Jwts.builder()
+                .setSubject(usuario.getEmail())
+                .claim("role", formattedRole)
+                .claim("id_usuario", usuario.getIdUsuario())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
 
     /* ───────────────────────────────
        🔎 VALIDAR TOKEN
     ─────────────────────────────── */
     public boolean validarToken(String token, String email) {
-        final String username = extraerEmail(token);
-        return (username.equals(email) && !estaExpirado(token));
+        try {
+            final String username = extraerEmail(token);
+            return (username.equals(email) && !estaExpirado(token));
+        } catch (Exception e) {
+            log.warn("⚠️ Token inválido o corrupto: {}", e.getMessage());
+            return false;
+        }
     }
 
     /* ───────────────────────────────
@@ -63,17 +70,15 @@ public String generarToken(Usuario usuario) {
     /* ───────────────────────────────
        👮‍♂️ EXTRAER ROL
     ─────────────────────────────── */
-   public String extraerRol(String token) {
-    Claims claims = extraerTodosLosClaims(token);
-    String role = (String) (claims.get("rol") != null ? claims.get("rol") : claims.get("role"));
+    public String extraerRol(String token) {
+        Claims claims = extraerTodosLosClaims(token);
+        String role = (String) claims.get("role");
 
-    // Asegura el prefijo ROLE_
-    if (role != null && !role.startsWith("ROLE_")) {
-        role = "ROLE_" + role.toUpperCase();
+        if (role != null && !role.startsWith("ROLE_")) {
+            role = "ROLE_" + role.toUpperCase();
+        }
+        return role;
     }
-    return role;
-}
-
 
     /* ───────────────────────────────
        🧩 MÉTODOS INTERNOS
@@ -92,14 +97,14 @@ public String generarToken(Usuario usuario) {
     }
 
     public Claims extraerTodosLosClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(secretKey.getBytes())
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
 
     private SecretKey getSigningKey() {
-    return Keys.hmacShaKeyFor(secretKey.getBytes());
-}
-
+        return Keys.hmacShaKeyFor(secretKey.getBytes());
+    }
 }

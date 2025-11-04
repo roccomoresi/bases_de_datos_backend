@@ -1,7 +1,11 @@
 package com.example.persistencia.poliglota.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class LoginRequest {
     private String email;
+    
+    @JsonProperty("password")
     private String password;
 
     public String getEmail() { return email; }
