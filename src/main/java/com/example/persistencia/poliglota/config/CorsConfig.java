@@ -14,17 +14,12 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        // 🔹 Permití el front en Vite
                         .allowedOrigins("http://localhost:5173")
-                        // 🔹 Métodos HTTP habilitados
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
-                        // 🔹 Headers permitidos
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
-                        // 🔹 Permite enviar cookies o auth headers si los usás
-                        .allowCredentials(true)
-                        // 🔹 Expira el preflight (OPTIONS) después de 1 hora
-                        .maxAge(3600);
+                        .allowCredentials(true);
             }
         };
     }
 }
+
