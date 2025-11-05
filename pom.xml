@@ -80,34 +80,27 @@
       <scope>runtime</scope>
     </dependency>
 
-    <!-- Neo4j -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-neo4j</artifactId>
-    </dependency>
 
-<!-- ✅ SpringDoc OpenAPI compatible con Spring Boot 3.5.x -->
-<dependency>
-    <groupId>org.springdoc</groupId>
-    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-    <version>2.7.0</version>
-</dependency>
+<!-- ✅ SpringDoc OpenAPI compatible con Spring Boot 3.5.x -->  
+  <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>2.7.0</version>
+  </dependency>
 
-
-
-<!-- 🧩 Validaciones (necesario para Swagger y DTOs con anotaciones) -->
-<dependency>
-    <groupId>org.hibernate.validator</groupId>
-    <artifactId>hibernate-validator</artifactId>
-    <version>8.0.1.Final</version>
-</dependency>
+  <!-- 🧩 Validaciones (necesario para Swagger y DTOs con anotaciones) -->
+  <dependency>
+      <groupId>org.hibernate.validator</groupId>
+      <artifactId>hibernate-validator</artifactId>
+      <version>8.0.1.Final</version>
+  </dependency>
 
 <!-- (opcional pero recomendable, provee mensajes por defecto en español si querés) -->
-<dependency>
-    <groupId>org.glassfish</groupId>
-    <artifactId>jakarta.el</artifactId>
-    <version>4.0.2</version>
-</dependency>
+  <dependency>
+      <groupId>org.glassfish</groupId>
+      <artifactId>jakarta.el</artifactId>
+      <version>4.0.2</version>
+  </dependency>
 
 
     <!-- Cassandra -->
@@ -124,18 +117,18 @@
     </dependency>
 
 
-    <!-- ✅ Lombok para simplificar las clases DTO y modelos -->
-<dependency>
-    <groupId>org.projectlombok</groupId>
-    <artifactId>lombok</artifactId>
-    <version>1.18.32</version>
-    <scope>provided</scope>
-</dependency>
+      <!-- ✅ Lombok para simplificar las clases DTO y modelos -->
+  <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.32</version>
+      <scope>provided</scope>
+  </dependency>
 
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-mongodb</artifactId>
-</dependency>
+  <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-mongodb</artifactId>
+  </dependency>
 
   
     <dependency>
@@ -143,6 +136,13 @@
       <artifactId>javaee-api</artifactId>
       <version>8.0.1</version>
     </dependency>
+
+<!-- Dependencia para WebSocket (chats) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-websocket</artifactId>
+    </dependency>
+
   </dependencies>
 
 <build>
@@ -172,5 +172,6 @@
     </plugin>
   </plugins>
 </build>
+
 
 </project>
