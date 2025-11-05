@@ -12,6 +12,10 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.config.Customizer;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
@@ -31,38 +35,74 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Usa el CORS definido abajo
-                .cors(c -> c.configurationSource(corsConfigurationSource()))
-                // APIs REST: sin CSRF
-                .csrf(csrf -> csrf.disable())
-                // Sin sesión de servidor
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // Todo permitido por ahora (ajustá si luego necesitás auth)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(WHITELIST).permitAll()
-                        .anyRequest().permitAll()
-                )
-                .formLogin(form -> form.disable())
-                .httpBasic(Customizer.withDefaults());
+            .csrf(csrf -> csrf.disable())
+            .cors(Customizer.withDefaults())
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-        return http.build();
-    }
+                // 📂 PÚBLICOS
+                .requestMatchers(
+                    "/auth/**",
+                    "/api/auth/**",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/api/usuarios/register",
+                    "/api/usuarios/login"
+                ).permitAll()
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration cfg = new CorsConfiguration();
+                // 👤 PERFIL primero (para que no lo pise /api/sql/**)
+                .requestMatchers("/api/sql/perfil/**").authenticated()
 
-        // Permitir el front en 5173 y 5174 (Vite puede cambiar de puerto)
-        cfg.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "http://localhost:5174"
-        ));
+                // 🔒 ADMIN y sesiones
+                .requestMatchers("/api/sql/roles/**", "/api/sql/sesiones/**").hasAuthority("ROLE_ADMIN")
 
-        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        cfg.setAllowedHeaders(List.of("*"));
-        cfg.setAllowCredentials(true);         // si usás cookies/Authorization
-        cfg.setExposedHeaders(List.of("Location"));
-        cfg.setMaxAge(3600L);
+                // ⚙️ Procesos → solo ADMIN
+                .requestMatchers(HttpMethod.POST, "/api/mongo/procesos/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/mongo/procesos/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/mongo/procesos/**").hasAuthority("ROLE_ADMIN")
+
+                // 💰 Finanzas críticas → ADMIN
+                .requestMatchers(HttpMethod.POST, "/api/finanzas/facturas").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/finanzas/facturas/*/pagar").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/finanzas/movimientos").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/finanzas/movimientos/*").hasAuthority("ROLE_ADMIN")
+
+                // 🚨 Alertas
+                .requestMatchers(HttpMethod.PUT, "/api/mongo/alertas/*/resolver")
+                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
+                .requestMatchers(HttpMethod.DELETE, "/api/mongo/alertas/*").hasAuthority("ROLE_ADMIN")
+
+                // ⚙️ Ejecución de procesos
+                .requestMatchers("/api/procesos/ejecutar")
+                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
+
+                // 👥 Usuarios: solo ADMIN
+                .requestMatchers("/api/sql/usuarios/**")
+                    .hasAuthority("ROLE_ADMIN")
+
+                // 📊 Lecturas de finanzas permitidas a USUARIO/ADMIN
+                .requestMatchers(HttpMethod.GET, "/api/finanzas/facturas/*", "/api/finanzas/cuenta/*")
+                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_USUARIO")
+                // 💰 Resto del módulo finanzas → ADMIN
+                .requestMatchers("/api/finanzas/**").hasAuthority("ROLE_ADMIN")
+
+                // 📊 Módulo SQL general (excepto usuarios/roles/sesiones ya tratados)
+                .requestMatchers("/api/sql/**")
+                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_USUARIO")
+
+                // 🧠 Monitoreo: ADMIN o TECNICO
+                .requestMatchers("/api/monitoreo/**")
+                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
+
+                // 📦 Informes y Mongo: autenticados
+                .requestMatchers("/api/informes/**", "/api/mongo/**")
+                    .authenticated()
+
+                // 🔒 Default
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg); // aplica a todos los endpoints

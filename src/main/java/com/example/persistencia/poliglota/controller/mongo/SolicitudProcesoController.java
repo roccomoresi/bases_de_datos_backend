@@ -1,7 +1,10 @@
 package com.example.persistencia.poliglota.controller.mongo;
 
+import com.example.persistencia.poliglota.dto.SolicitudProcesoRequest;
 import com.example.persistencia.poliglota.model.mongo.SolicitudProceso;
 import com.example.persistencia.poliglota.service.mongo.SolicitudProcesoService;
+import com.example.persistencia.poliglota.service.sql.FacturaService;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,9 +16,13 @@ import java.util.UUID;
 public class SolicitudProcesoController {
 
     private final SolicitudProcesoService service;
+    private final FacturaService facturaService;
+    
 
-    public SolicitudProcesoController(SolicitudProcesoService service) {
+
+    public SolicitudProcesoController(SolicitudProcesoService service,FacturaService facturaService) {
         this.service = service;
+        this.facturaService = facturaService;
     }
 
     /* ───────────────────────────────
@@ -46,16 +53,13 @@ public class SolicitudProcesoController {
     /* ───────────────────────────────
        🟢 CREAR NUEVA SOLICITUD
     ─────────────────────────────── */
-    @PostMapping
-    public ResponseEntity<SolicitudProceso> create(
-            @RequestParam Integer usuarioId,
-            @RequestParam String procesoId // ✅ ahora String
-    ) {
-        if (usuarioId == null || procesoId == null || procesoId.isBlank()) {
+    @PostMapping("/nueva")
+    public ResponseEntity<SolicitudProceso> solicitar(@RequestBody SolicitudProcesoRequest body) {
+        if (body.getUsuarioId() == null || body.getProcesoId() == null) {
             return ResponseEntity.badRequest().build();
         }
 
-        SolicitudProceso solicitud = service.create(usuarioId, procesoId);
+        SolicitudProceso solicitud = service.create(body.getUsuarioId(), body.getProcesoId());
         return ResponseEntity.ok(solicitud);
     }
 
@@ -89,4 +93,6 @@ public class SolicitudProcesoController {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    
 }
