@@ -2,34 +2,37 @@ package com.example.persistencia.poliglota.config.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.config.Customizer;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    // Rutas públicas (swagger + tu API)
-    private static final String[] WHITELIST = new String[] {
-            "/swagger-ui/**",
-            "/swagger-ui.html",
-            "/v3/api-docs/**",
-            "/error",
-            "/api/**"
+    private final JwtAuthFilter jwtFilter;
+
+    private static final String[] WHITELIST = {
+        "/swagger-ui/**",
+        "/swagger-ui.html",
+        "/v3/api-docs/**",
+        "/error",
+        "/api/auth/**",
+        "auth/register",
+        "/auth/login"
     };
 
     @Bean
@@ -40,33 +43,24 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(WHITELIST).permitAll()
 
-                // 📂 PÚBLICOS
-                .requestMatchers(
-                    "/auth/**",
-                    "/api/auth/**",
-                    "/swagger-ui/**",
-                    "/v3/api-docs/**",
-                    "/api/usuarios/register",
-                    "/api/usuarios/login"
-                ).permitAll()
-
-                // 👤 PERFIL primero (para que no lo pise /api/sql/**)
+                // 👤 Perfil
                 .requestMatchers("/api/sql/perfil/**").authenticated()
 
-                // 🔒 ADMIN y sesiones
-                .requestMatchers("/api/sql/roles/**", "/api/sql/sesiones/**").hasAuthority("ROLE_ADMIN")
+                // 👥 Usuarios y roles → ADMIN
+                .requestMatchers("/api/sql/usuarios/**", "/api/sql/roles/**", "/api/sql/sesiones/**")
+                    .hasAuthority("ROLE_ADMIN")
 
-                // ⚙️ Procesos → solo ADMIN
+                // ⚙️ Procesos Mongo → ADMIN
                 .requestMatchers(HttpMethod.POST, "/api/mongo/procesos/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/mongo/procesos/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/mongo/procesos/**").hasAuthority("ROLE_ADMIN")
 
-                // 💰 Finanzas críticas → ADMIN
-                .requestMatchers(HttpMethod.POST, "/api/finanzas/facturas").hasAuthority("ROLE_ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/finanzas/facturas/*/pagar").hasAuthority("ROLE_ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/finanzas/movimientos").hasAuthority("ROLE_ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/finanzas/movimientos/*").hasAuthority("ROLE_ADMIN")
+                // 💰 Finanzas
+                .requestMatchers(HttpMethod.GET, "/api/finanzas/facturas/*", "/api/finanzas/cuenta/*")
+                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_USUARIO")
+                .requestMatchers("/api/finanzas/**").hasAuthority("ROLE_ADMIN")
 
                 // 🚨 Alertas
                 .requestMatchers(HttpMethod.PUT, "/api/mongo/alertas/*/resolver")
@@ -77,35 +71,31 @@ public class SecurityConfig {
                 .requestMatchers("/api/procesos/ejecutar")
                     .hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
 
-                // 👥 Usuarios: solo ADMIN
-                .requestMatchers("/api/sql/usuarios/**")
-                    .hasAuthority("ROLE_ADMIN")
-
-                // 📊 Lecturas de finanzas permitidas a USUARIO/ADMIN
-                .requestMatchers(HttpMethod.GET, "/api/finanzas/facturas/*", "/api/finanzas/cuenta/*")
-                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_USUARIO")
-                // 💰 Resto del módulo finanzas → ADMIN
-                .requestMatchers("/api/finanzas/**").hasAuthority("ROLE_ADMIN")
-
-                // 📊 Módulo SQL general (excepto usuarios/roles/sesiones ya tratados)
-                .requestMatchers("/api/sql/**")
-                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_USUARIO")
-
-                // 🧠 Monitoreo: ADMIN o TECNICO
+                // 🧠 Monitoreo
                 .requestMatchers("/api/monitoreo/**")
                     .hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
 
-                // 📦 Informes y Mongo: autenticados
-                .requestMatchers("/api/informes/**", "/api/mongo/**")
-                    .authenticated()
+                // 📦 Informes y Mongo
+                .requestMatchers("/api/informes/**", "/api/mongo/**").authenticated()
 
                 // 🔒 Default
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
+        return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration cfg = new CorsConfiguration();
+        cfg.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000")); // ajustá tus frontends
+        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        cfg.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        cfg.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", cfg); // aplica a todos los endpoints
+        source.registerCorsConfiguration("/**", cfg);
         return source;
     }
 

@@ -5,6 +5,7 @@ import com.example.persistencia.poliglota.dto.PagoResponse;
 import com.example.persistencia.poliglota.model.sql.Pago;
 import com.example.persistencia.poliglota.service.sql.PagoService;
 import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +15,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/api/sql/pagos")
+@RequiredArgsConstructor
 public class PagoController {
 
     private final PagoService pagoService;
@@ -21,21 +23,16 @@ public class PagoController {
     @GetMapping
     public ResponseEntity<java.util.List<PagoResponse>> listarPagos() {
         var pagos = pagoService.obtenerTodos();
-        var resp = pagos.stream().map(pago -> new PagoResponse(
-                pago.getIdPago(),
-                pago.getFactura().getIdFactura(),
-                pago.getFactura().getUsuario().getIdUsuario(),
-                pago.getMetodoPago(),
-                pago.getMontoPagado(),
-                pago.getFechaPago().toString()
+        var resp = pagos.stream().map(p -> new PagoResponse(
+                p.getIdPago(),
+                p.getMetodoPago(),
+                p.getMontoPagado(),
+                p.getFactura() != null ? p.getFactura().getIdFactura() : null,
+                (p.getFactura() != null && p.getFactura().getEstado() != null) ? p.getFactura().getEstado().name() : null,
+                p.getFactura() != null ? p.getFactura().getDescripcionProceso() : null
         )).toList();
         return ResponseEntity.ok(resp);
     }
-
-    @PostMapping
-    public ResponseEntity<?> registrarPago(@RequestBody PagoRequest request) {
-        log.info("💳 Registrando pago de factura ID {} por ${} ({})",
-                request.getIdFactura(), request.getMonto(), request.getMetodoPago());
 
     // 🔹 Listar pagos por factura
     @GetMapping("/factura/{facturaId}")
@@ -64,9 +61,10 @@ public class PagoController {
                     pagoGuardado.getIdPago(),
                     pagoGuardado.getMetodoPago(),
                     pagoGuardado.getMontoPagado(),
-                    pagoGuardado.getFactura().getIdFactura(),
-                    pagoGuardado.getFactura().getEstado().name(),
-                    pagoGuardado.getFactura().getDescripcionProceso()
+                    pagoGuardado.getFactura() != null ? pagoGuardado.getFactura().getIdFactura() : null,
+                    (pagoGuardado.getFactura() != null && pagoGuardado.getFactura().getEstado() != null) 
+                        ? pagoGuardado.getFactura().getEstado().name() : null,
+                    pagoGuardado.getFactura() != null ? pagoGuardado.getFactura().getDescripcionProceso() : null
             );
 
             return ResponseEntity.ok(response);

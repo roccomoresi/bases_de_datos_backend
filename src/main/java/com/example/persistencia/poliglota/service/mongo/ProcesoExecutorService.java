@@ -53,7 +53,6 @@ public class ProcesoExecutorService {
         // 🟠 2. Ejecutar el proceso según tipo
         String resultado;
         LocalDateTime inicio = solicitud.getFechaSolicitud();
-        LocalDateTime fin = LocalDateTime.now();
 
         switch (proceso.getTipo().toLowerCase()) {
             case "informe" -> resultado = generarInformePromedio();
@@ -81,7 +80,13 @@ public class ProcesoExecutorService {
         solicitud.setEstado("completado");
         solicitudRepo.save(solicitud);
 
-        return resultado;
+        // 🟢 6. Respuesta JSON amigable
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("procesoId", proceso.getId());
+        resp.put("usuarioId", usuarioId);
+        resp.put("estado", solicitud.getEstado());
+        resp.put("resultado", resultado);
+        return resp;
     }
 
     /* ───────────────────────────────

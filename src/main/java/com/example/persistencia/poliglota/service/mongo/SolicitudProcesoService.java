@@ -1,6 +1,5 @@
 package com.example.persistencia.poliglota.service.mongo;
 
-import com.example.persistencia.poliglota.dto.SolicitudProcesoRequest;
 import com.example.persistencia.poliglota.model.mongo.HistorialEjecucion;
 import com.example.persistencia.poliglota.model.mongo.SolicitudProceso;
 import com.example.persistencia.poliglota.repository.mongo.ProcesoRepository;

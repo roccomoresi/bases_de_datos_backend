@@ -5,12 +5,12 @@ import com.example.persistencia.poliglota.model.sql.*;
 import com.example.persistencia.poliglota.repository.sql.FacturaRepository;
 import com.example.persistencia.poliglota.repository.sql.PagoRepository;
 import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +33,7 @@ public class PagoService {
         pago.setFactura(factura);
         pago.setMontoPagado(montoPagado);
         pago.setMetodoPago(metodoPago);
+        pago.setFechaPago(LocalDateTime.now());
         Pago savedPago = pagoRepository.save(pago);
 
         // Marcar factura como PAGADA (vía servicio)

@@ -19,11 +19,6 @@ public class ProcesoService {
     private final ProcesoRepository repository;
     private final HistorialEjecucionService historialService;
 
-    public ProcesoService(ProcesoRepository repository, HistorialEjecucionService historialService) {
-        this.repository = repository;
-        this.historialService = historialService;
-    }
-
     /* ───────────────────────────────
        📋 LISTAR Y BUSCAR
     ─────────────────────────────── */

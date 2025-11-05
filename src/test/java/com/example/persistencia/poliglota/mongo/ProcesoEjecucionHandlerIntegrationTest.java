@@ -6,7 +6,6 @@ import com.example.persistencia.poliglota.model.mongo.SolicitudProceso;
 import com.example.persistencia.poliglota.service.mongo.ProcesoService;
 import com.example.persistencia.poliglota.service.mongo.SolicitudProcesoService;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationEventPublisher;
@@ -15,10 +14,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -44,7 +41,7 @@ class ProcesoEjecucionHandlerIntegrationTest {
         Proceso proceso = new Proceso();
         proceso.setNombre("Proceso Demo");
         proceso.setTipo("servicio");
-        proceso.setCosto(new BigDecimal("123.45"));
+        proceso.setCosto(123.45);
 
         SolicitudProceso solicitud = new SolicitudProceso(usuarioId, proceso);
         solicitud.setEstado("pendiente");
