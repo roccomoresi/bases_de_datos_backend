@@ -75,17 +75,19 @@ public class FacturaController {
         if (req.getIdUsuario() == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "El campo idUsuario es obligatorio"));
         }
-
-        Usuario usuario = usuarioRepository.findById(req.getIdUsuario())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID " + req.getIdUsuario()));
-
+    
+        Usuario usuario = new Usuario();
+        usuario.setIdUsuario(req.getIdUsuario()); // ✅ solo referencia persistente
+    
         Factura factura = new Factura();
         factura.setUsuario(usuario);
         factura.setTotal(req.getTotal());
         factura.setDescripcionProceso(req.getDescripcionProceso());
-
+        factura.setEstado(Factura.EstadoFactura.PENDIENTE);
+        factura.setFechaEmision(java.time.LocalDateTime.now());
+    
         Factura saved = facturaService.crearFactura(factura);
-
+    
         FacturaResponse resp = new FacturaResponse(
                 saved.getIdFactura(),
                 saved.getUsuario().getIdUsuario(),
@@ -94,9 +96,10 @@ public class FacturaController {
                 saved.getTotal(),
                 saved.getDescripcionProceso()
         );
-
+    
         return ResponseEntity.ok(resp);
     }
+    
 
     /* ───────────────────────────────
        ✅ 3. Marcar factura como pagada

@@ -10,6 +10,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,12 +23,12 @@ public class PagoService {
     private final MovimientoCuentaService movimientoCuentaService;
     private final ApplicationEventPublisher eventPublisher;
 
+    // 🔹 Registrar pago (ya estaba correcto)
     @Transactional
     public Pago registrarPago(Integer idFactura, Double montoPagado, String metodoPago) {
         Factura factura = facturaRepository.findById(idFactura)
                 .orElseThrow(() -> new RuntimeException("Factura no encontrada"));
 
-        // Crear el pago
         Pago pago = new Pago();
         pago.setFactura(factura);
         pago.setMontoPagado(montoPagado);
@@ -57,10 +58,17 @@ public class PagoService {
         return savedPago;
     }
 
+    // 🔹 Listar todos los pagos (para GET /pagos)
+    public List<Pago> getAll() {
+        return pagoRepository.findAll();
+    }
+
+    // 🔹 Obtener pagos por factura (para GET /pagos/factura/{id})
     public List<Pago> obtenerPagosPorFactura(Integer idFactura) {
         return pagoRepository.findByFactura_IdFactura(idFactura);
     }
 
+    // 🔹 Obtener pagos por usuario (ya lo tenías)
     public List<Pago> obtenerPagosPorUsuario(Integer idUsuario) {
         return pagoRepository.findByFactura_Usuario_IdUsuario(idUsuario);
     }

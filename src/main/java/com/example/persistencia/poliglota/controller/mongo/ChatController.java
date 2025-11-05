@@ -70,5 +70,32 @@ public class ChatController {
         return ResponseEntity.ok(service.marcarMensajeComoNoLeido(chatId, index));
     }
 
+    // 📬 Chats recientes resumidos (último mensaje)
+    @GetMapping("/recientes/resumen")
+    public ResponseEntity<List<Map<String, Object>>> getRecientesResumido() {
+        return ResponseEntity.ok(service.listarRecientesResumido());
+    }
+    // 🗑️ Eliminar un chat completo
+    @DeleteMapping("/{chatId}")
+    public ResponseEntity<?> eliminarChat(@PathVariable String chatId) {
+        try {
+            service.eliminarChat(chatId);
+            return ResponseEntity.ok(Map.of("mensaje", "✅ Chat eliminado correctamente"));
+        } catch (Exception e) {
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // 🗑️ Eliminar un mensaje dentro de un chat
+    @DeleteMapping("/{chatId}/mensajes/{index}")
+    public ResponseEntity<?> eliminarMensaje(@PathVariable String chatId, @PathVariable int index) {
+        try {
+            service.eliminarMensaje(chatId, index);
+            return ResponseEntity.ok(Map.of("mensaje", "🗑️ Mensaje eliminado correctamente"));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+
 }
 

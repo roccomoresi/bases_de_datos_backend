@@ -10,7 +10,8 @@ import com.example.persistencia.poliglota.service.sql.FacturaService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class ProcesoExecutorService {
@@ -35,11 +36,16 @@ public class ProcesoExecutorService {
         this.facturaService = facturaService;
     }
 
-    public String ejecutarProceso(Integer usuarioId, String procesoId) {
+    /**
+     * Ejecuta el proceso (Mongo) y genera la factura (SQL).
+     * Devuelve un Map<String,Object> para que el controller responda en JSON.
+     */
+    public Map<String, Object> ejecutarProceso(Integer usuarioId, String procesoId) {
+        // 1) Buscar proceso
         Proceso proceso = procesoRepo.findById(procesoId)
                 .orElseThrow(() -> new RuntimeException("Proceso no encontrado"));
 
-        // 🟢 1. Crear solicitud
+        // 2) Crear solicitud
         SolicitudProceso solicitud = new SolicitudProceso(usuarioId, proceso);
         solicitud.setEstado("en_progreso");
         solicitudRepo.save(solicitud);

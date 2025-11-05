@@ -5,6 +5,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Entity
 @Table(name = "factura")
 @Getter
@@ -37,9 +39,8 @@ public class Factura {
     private String descripcionProceso; // 🔹 referencia lógica al proceso en Mongo
 
     @OneToMany(mappedBy = "factura", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Pago> pagos;
-
-    
 
     public enum EstadoFactura {
         PENDIENTE,

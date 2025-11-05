@@ -29,9 +29,8 @@ public class ProcesoController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Proceso> getById(@PathVariable String id) {
-        return service.getById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        // El service lanza 404 si no existe, así que devolvemos 200 directo si llega
+        return ResponseEntity.ok(service.obtenerPorId(id));
     }
 
     @GetMapping("/tipo/{tipo}")
@@ -56,7 +55,7 @@ public class ProcesoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable String id) {
-        service.delete(id);
+        service.delete(id); // lanza 404 si no existe
         return ResponseEntity.noContent().build();
     }
 }

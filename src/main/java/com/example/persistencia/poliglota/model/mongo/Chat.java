@@ -10,6 +10,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Representa un chat entre usuarios (privado o grupal).
+ * Contiene mensajes embebidos directamente en el documento.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,19 +23,20 @@ public class Chat {
     @Id
     private String id;
 
-    private List<String> participantes = new ArrayList<>();
-    private String nombreGrupo; // solo se usa si es grupal
-    private String tipo; // "privado" o "grupo"
-    private Instant ultimaActualizacion;
-    private List<Mensaje> mensajes = new ArrayList<>();
+    private List<String> participantes = new ArrayList<>();  // IDs o nombres de usuario
+    private String nombreGrupo;                              // Solo si es grupal
+    private String tipo;                                     // "privado" o "grupo"
+    private Instant ultimaActualizacion = Instant.now();     // Fecha de última actividad
+
+    private List<Mensaje> mensajes = new ArrayList<>();      // Mensajes embebidos
 
     @Data
-    @AllArgsConstructor
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class Mensaje {
         private String remitente;
         private String contenido;
-        private Instant fechaEnvio;
+        private Instant fechaEnvio = Instant.now();
         private boolean leido = false;
     }
 }
