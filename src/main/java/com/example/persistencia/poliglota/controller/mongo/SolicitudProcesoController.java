@@ -2,9 +2,8 @@ package com.example.persistencia.poliglota.controller.mongo;
 
 import com.example.persistencia.poliglota.dto.SolicitudProcesoRequest;
 import com.example.persistencia.poliglota.model.mongo.SolicitudProceso;
+import com.example.persistencia.poliglota.model.mongo.SolicitudProceso.EstadoProceso;
 import com.example.persistencia.poliglota.service.mongo.SolicitudProcesoService;
-import com.example.persistencia.poliglota.service.sql.FacturaService;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,14 +14,10 @@ import java.util.UUID;
 @RequestMapping("/api/mongo/solicitudes")
 public class SolicitudProcesoController {
 
-    private final SolicitudProcesoService service;
-    private final FacturaService facturaService;
-    
+    private final SolicitudProcesoService solicitudService;
 
-
-    public SolicitudProcesoController(SolicitudProcesoService service,FacturaService facturaService) {
-        this.service = service;
-        this.facturaService = facturaService;
+    public SolicitudProcesoController(SolicitudProcesoService solicitudService) {
+        this.solicitudService = solicitudService;
     }
 
     /* ───────────────────────────────
@@ -30,24 +25,25 @@ public class SolicitudProcesoController {
     ─────────────────────────────── */
     @GetMapping
     public ResponseEntity<List<SolicitudProceso>> getAll() {
-        return ResponseEntity.ok(service.getAll());
+        return ResponseEntity.ok(solicitudService.getAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<SolicitudProceso> getById(@PathVariable UUID id) {
-        return service.getById(id)
+        return solicitudService.getById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<List<SolicitudProceso>> getByUsuario(@PathVariable Integer usuarioId) {
-        return ResponseEntity.ok(service.getByUsuario(usuarioId));
+        return ResponseEntity.ok(solicitudService.getByUsuario(usuarioId));
     }
 
+    // 🔸 Nuevo: búsqueda por estado (enum)
     @GetMapping("/estado/{estado}")
-    public ResponseEntity<List<SolicitudProceso>> getByEstado(@PathVariable String estado) {
-        return ResponseEntity.ok(service.getByEstado(estado));
+    public ResponseEntity<List<SolicitudProceso>> getByEstado(@PathVariable EstadoProceso estado) {
+        return ResponseEntity.ok(solicitudService.getByEstado(estado));
     }
 
     /* ───────────────────────────────
@@ -59,7 +55,7 @@ public class SolicitudProcesoController {
             return ResponseEntity.badRequest().build();
         }
 
-        SolicitudProceso solicitud = service.create(body.getUsuarioId(), body.getProcesoId());
+        SolicitudProceso solicitud = solicitudService.create(body.getUsuarioId(), body.getProcesoId());
         return ResponseEntity.ok(solicitud);
     }
 
@@ -69,9 +65,9 @@ public class SolicitudProcesoController {
     @PutMapping("/{id}/estado")
     public ResponseEntity<SolicitudProceso> updateEstado(
             @PathVariable UUID id,
-            @RequestParam String estado
+            @RequestParam EstadoProceso estado
     ) {
-        return ResponseEntity.ok(service.updateEstado(id, estado));
+        return ResponseEntity.ok(solicitudService.updateEstado(id, estado));
     }
 
     /* ───────────────────────────────
@@ -82,7 +78,7 @@ public class SolicitudProcesoController {
             @PathVariable UUID id,
             @RequestParam String resultado
     ) {
-        return ResponseEntity.ok(service.updateResultado(id, resultado));
+        return ResponseEntity.ok(solicitudService.updateResultado(id, resultado));
     }
 
     /* ───────────────────────────────
@@ -90,9 +86,7 @@ public class SolicitudProcesoController {
     ─────────────────────────────── */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        service.delete(id);
+        solicitudService.delete(id);
         return ResponseEntity.noContent().build();
     }
-
-    
 }

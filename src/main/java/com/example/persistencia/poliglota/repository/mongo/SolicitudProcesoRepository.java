@@ -1,6 +1,8 @@
 package com.example.persistencia.poliglota.repository.mongo;
 
 import com.example.persistencia.poliglota.model.mongo.SolicitudProceso;
+import com.example.persistencia.poliglota.model.mongo.SolicitudProceso.EstadoProceso;
+
 import org.springframework.data.mongodb.repository.MongoRepository;
 import java.util.List;
 import java.util.UUID;
@@ -8,4 +10,6 @@ import java.util.UUID;
 public interface SolicitudProcesoRepository extends MongoRepository<SolicitudProceso, UUID> {
     List<SolicitudProceso> findByUsuarioId(Integer usuarioId);
     List<SolicitudProceso> findByEstadoIgnoreCase(String estado);
+    // 🔹 Buscar por estado (enum)
+    List<SolicitudProceso> findByEstado(EstadoProceso estado);
 }

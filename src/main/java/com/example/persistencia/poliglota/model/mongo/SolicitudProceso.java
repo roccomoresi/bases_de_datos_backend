@@ -12,19 +12,23 @@ public class SolicitudProceso {
 
     @Id
     private UUID id;
+
     private Integer usuarioId;
 
     @DBRef
     private Proceso proceso;
 
     private LocalDateTime fechaSolicitud;
-    private String estado;     // pendiente | en_curso | completado
-    private String resultado;  // opcional
+    private EstadoProceso estado;      // PENDIENTE | EN_CURSO | COMPLETADO
+    private String resultado;          // opcional
+    private LocalDateTime fechaActualizacion;
 
+    // 🔹 Constructores
     public SolicitudProceso() {
         this.id = UUID.randomUUID();
         this.fechaSolicitud = LocalDateTime.now();
-        this.estado = "pendiente";
+        this.estado = EstadoProceso.PENDIENTE;
+        this.fechaActualizacion = LocalDateTime.now();
     }
 
     public SolicitudProceso(Integer usuarioId, Proceso proceso) {
@@ -33,7 +37,7 @@ public class SolicitudProceso {
         this.proceso = proceso;
     }
 
-    // Getters y Setters
+    // 🔹 Getters y Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -46,9 +50,27 @@ public class SolicitudProceso {
     public LocalDateTime getFechaSolicitud() { return fechaSolicitud; }
     public void setFechaSolicitud(LocalDateTime fechaSolicitud) { this.fechaSolicitud = fechaSolicitud; }
 
-    public String getEstado() { return estado; }
-    public void setEstado(String estado) { this.estado = estado; }
+    public EstadoProceso getEstado() { return estado; }
+    public void setEstado(EstadoProceso estado) { 
+        this.estado = estado;
+        this.fechaActualizacion = LocalDateTime.now();
+    }
 
     public String getResultado() { return resultado; }
-    public void setResultado(String resultado) { this.resultado = resultado; }
+    public void setResultado(String resultado) { 
+        this.resultado = resultado; 
+        this.fechaActualizacion = LocalDateTime.now();
+    }
+
+    public LocalDateTime getFechaActualizacion() { return fechaActualizacion; }
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
+        this.fechaActualizacion = fechaActualizacion;
+    }
+
+    // 🔹 Enum interna
+    public enum EstadoProceso {
+        PENDIENTE,
+        EN_CURSO,
+        COMPLETADO
+    }
 }

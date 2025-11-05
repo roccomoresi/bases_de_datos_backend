@@ -69,21 +69,22 @@ class PaymentFlowIntegrationTest {
     @Test
     void pagarFactura_persisteMovimientoCredito_actualizaSaldo_emiteEvento() throws Exception {
         // 1) Crear usuario
-        Usuario u = new Usuario();
-        u.setNombreCompleto("Usuario Test");
-        u.setEmail("user" + System.nanoTime() + "@test.local");
-        u.setContrasena("secret");
-        u = usuarioRepository.save(u);
+Usuario u = new Usuario();
+u.setNombreCompleto("Usuario Test");
+u.setEmail("user" + System.nanoTime() + "@test.local");
+u.setContrasena("secret");
+u = usuarioRepository.save(u);
 
-        // 2) Generar factura PENDIENTE sin impacto contable
-        double monto = 500.0;
-        facturaService.generarFacturaPendiente(u.getIdUsuario(), "Solicitud del proceso: Demo", monto);
+// 2) Generar factura PENDIENTE sin impacto contable
+double monto = 500.0;
+facturaService.generarFacturaPendiente(u.getIdUsuario(), "Test factura", monto, "TEST-PROCESO");
 
-        // Recuperar última factura del usuario
-        List<Factura> facturas = facturaRepository.findByUsuario_IdUsuarioOrderByFechaEmisionDesc(u.getIdUsuario());
-        Assertions.assertFalse(facturas.isEmpty(), "Debe existir al menos una factura pendiente");
-        Factura factura = facturas.get(0);
-        Integer facturaId = factura.getIdFactura();
+// Recuperar última factura del usuario
+List<Factura> facturas = facturaRepository.findByUsuario_IdUsuarioOrderByFechaEmisionDesc(u.getIdUsuario());
+Assertions.assertFalse(facturas.isEmpty(), "Debe existir al menos una factura pendiente");
+Factura factura = facturas.get(0);
+Integer facturaId = factura.getIdFactura();
+
 
         // 3) Registrar pago: debe crear CC si no existe, sumar saldo y registrar CREDITO
         pagoService.registrarPago(facturaId, monto, "TEST");

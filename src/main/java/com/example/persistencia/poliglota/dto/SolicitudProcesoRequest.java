@@ -4,12 +4,13 @@ import lombok.Data;
 
 @Data
 public class SolicitudProcesoRequest {
-    private Integer usuarioId;
-    private String procesoId;
-    private String tipo;
+
+    private Integer usuarioId;   // FK → Usuario SQL
+    private String procesoId;    // FK → Proceso Mongo o SQL
+    private String descripcion;  // (opcional) descripción amigable
     private String ciudad;
     private String pais;
-    private String desde;
-    private String hasta;
+    private String rangoFechas;
+
 }
 

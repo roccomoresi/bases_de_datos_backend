@@ -42,9 +42,24 @@ public class Factura {
     @JsonManagedReference
     private List<Pago> pagos;
 
+
+    @Column(name = "proceso_id", nullable = true)
+    private String procesoId;
+
+
     public enum EstadoFactura {
         PENDIENTE,
         PAGADA,
-        VENCIDA
+        VENCIDA,
+        EMITIDA
     }
+
+    public String getProcesoId() {
+    return procesoId;
+}
+
+public void setProcesoId(String procesoId) {
+    this.procesoId = procesoId;
+}
+
 }
