@@ -7,6 +7,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +20,9 @@ public class FacturaService {
     private final CuentaCorrienteService cuentaCorrienteService;
     private final MovimientoCuentaService movimientoCuentaService;
 
+    /* ───────────────────────────────
+       🧾 CREAR FACTURA COMPLETA (con impacto en cuenta)
+    ─────────────────────────────── */
     @Transactional
     public Factura crearFactura(Factura factura) {
         // Guardar factura
@@ -41,10 +45,16 @@ public class FacturaService {
         return saved;
     }
 
+    /* ───────────────────────────────
+       📋 OBTENER FACTURAS POR USUARIO
+    ─────────────────────────────── */
     public List<Factura> obtenerFacturasPorUsuario(Integer idUsuario) {
         return facturaRepository.findByUsuario_IdUsuarioOrderByFechaEmisionDesc(idUsuario);
     }
 
+    /* ───────────────────────────────
+       💰 MARCAR COMO PAGADA
+    ─────────────────────────────── */
     @Transactional
     public Factura marcarComoPagada(Integer idFactura) {
         Factura f = facturaRepository.findById(idFactura)
@@ -53,11 +63,16 @@ public class FacturaService {
         return facturaRepository.save(f);
     }
 
-    /**
-     * Genera una factura asociada a un proceso y la vincula al usuario.
-     */
+    public List<Factura> obtenerTodas() {
+    return facturaRepository.findAll();
+}
+
+
+    /* ───────────────────────────────
+       🧾 GENERAR FACTURA COMPLETA
+    ─────────────────────────────── */
     @Transactional
-    public Factura generarFactura(Integer idUsuario, String descripcion, double monto) {
+    public Factura generarFactura(Integer idUsuario, String descripcion, Double monto) {
         Usuario u = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
@@ -65,11 +80,23 @@ public class FacturaService {
         f.setUsuario(u);
         f.setTotal(monto);
         f.setDescripcionProceso(descripcion);
-
         return crearFactura(f);
     }
-    public Optional<Factura> getById(Integer id) {
-        return facturaRepository.findById(id);
-    }
-    
+
+    /* ───────────────────────────────
+       🕓 GENERAR FACTURA PENDIENTE (sin impacto contable)
+    ─────────────────────────────── */
+    public void generarFacturaPendiente(Integer usuarioId, String descripcion, Double monto) {
+    Usuario usuario = usuarioRepository.findById(usuarioId)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+    Factura factura = new Factura();
+    factura.setUsuario(usuario);
+    factura.setDescripcionProceso(descripcion);
+    factura.setTotal(monto);
+    factura.setEstado(Factura.EstadoFactura.PENDIENTE);
+    factura.setFechaEmision(LocalDateTime.now());
+    facturaRepository.save(factura);
+}
+
 }

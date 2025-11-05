@@ -50,66 +50,79 @@ public class ProcesoExecutorService {
         solicitud.setEstado("en_progreso");
         solicitudRepo.save(solicitud);
 
-        // 3) Ejecutar lógica según el tipo de proceso
+        // 🟠 2. Ejecutar el proceso según tipo
         String resultado;
-        String tipo = proceso.getTipo() != null ? proceso.getTipo().toLowerCase() : "";
-        switch (tipo) {
-            case "informe":
-                resultado = generarInformeClimatico();
-                break;
-            case "alerta":
-                resultado = "Se ejecutó la verificación de alertas.";
-                break;
-            case "servicio":
-                resultado = "Servicio ejecutado correctamente.";
-                break;
-            default:
-                resultado = "Proceso ejecutado sin acciones adicionales.";
+        LocalDateTime inicio = solicitud.getFechaSolicitud();
+        LocalDateTime fin = LocalDateTime.now();
+
+        switch (proceso.getTipo().toLowerCase()) {
+            case "informe" -> resultado = generarInformePromedio();
+            case "alerta" -> resultado = generarAlertas();
+            case "servicio" -> resultado = ejecutarServicioBasico();
+            default -> resultado = "✅ Proceso ejecutado sin acciones específicas.";
         }
 
-        // 4) Actualizar solicitud y registrar historial
+        // 🔵 3. Guardar historial
+        HistorialEjecucion log = new HistorialEjecucion(
+                proceso.getId(),
+                proceso.getNombre(),
+                usuarioId,
+                inicio,
+                LocalDateTime.now(),
+                resultado
+        );
+        historialService.save(log);
+
+        // 🧾 4. Facturar el proceso como PENDIENTE (sin impacto contable inmediato)
+        facturaService.generarFacturaPendiente(usuarioId, proceso.getNombre(), proceso.getCosto().doubleValue());
+
+        // 🟣 5. Marcar solicitud como completada
         solicitud.setResultado(resultado);
         solicitud.setEstado("completado");
         solicitudRepo.save(solicitud);
 
-        HistorialEjecucion log = new HistorialEjecucion(
-                proceso.getId(),               // id del proceso (String)
-                proceso.getNombre(),
-                usuarioId,                     // usuario SQL (Integer)
-                solicitud.getFechaSolicitud(), // inicio
-                LocalDateTime.now(),           // fin
-                resultado
-        );
-        historialService.save(log); // (una sola vez)
-
-        // 5) Generar factura en SQL (null-safe)
-        double monto = proceso.getCosto() != null ? proceso.getCosto() : 0.0;
-        facturaService.generarFactura(
-                usuarioId,
-                proceso.getNombre(),
-                monto
-        );
-
-        // 6) Armar respuesta
-        Map<String, Object> resp = new HashMap<>();
-        resp.put("status", "OK");
-        resp.put("mensaje", "Proceso ejecutado y factura generada correctamente");
-        resp.put("usuarioId", usuarioId);
-        resp.put("procesoId", procesoId);
-        resp.put("nombreProceso", proceso.getNombre());
-        resp.put("montoFacturado", monto);
-        resp.put("resultado", resultado);
-        resp.put("solicitudId", solicitud.getId()); // si tu SolicitudProceso tiene id
-        resp.put("timestamp", LocalDateTime.now());
-        return resp;
+        return resultado;
     }
 
-    private String generarInformeClimatico() {
-        var datos = medicionService.obtenerPorPais("Argentina");
-        double promedio = datos.stream()
+    /* ───────────────────────────────
+       🔹 Tipos de procesos
+    ─────────────────────────────── */
+
+    // Informe: ejemplo de promedio real en Cassandra
+    private String generarInformePromedio() {
+        var mediciones = medicionService.obtenerPorPais("Argentina");
+        if (mediciones.isEmpty()) return "Sin datos en Cassandra para Argentina.";
+
+        double promedioTemp = mediciones.stream()
                 .mapToDouble(m -> m.getTemperatura() != null ? m.getTemperatura() : 0)
                 .average()
                 .orElse(0);
-        return "Temperatura promedio en Argentina: " + String.format("%.2f", promedio) + "°C";
+
+        double promedioHumedad = mediciones.stream()
+                .mapToDouble(m -> m.getHumedad() != null ? m.getHumedad() : 0)
+                .average()
+                .orElse(0);
+
+        return String.format(
+                "🌎 Informe Climático - Argentina%nTemperatura promedio: %.2f°C%nHumedad promedio: %.2f%%",
+                promedioTemp, promedioHumedad
+        );
+    }
+
+    // Alerta: busca valores extremos
+    private String generarAlertas() {
+        var mediciones = medicionService.obtenerPorPais("Argentina");
+        long alertas = mediciones.stream()
+                .filter(m -> m.getTemperatura() != null && m.getTemperatura() > 40)
+                .count();
+
+        return alertas > 0
+                ? "⚠️ Se detectaron " + alertas + " temperaturas extremas (>40°C) en Argentina."
+                : "✅ No se detectaron alertas en el rango actual.";
+    }
+
+    // Servicio básico
+    private String ejecutarServicioBasico() {
+        return "🔧 Servicio de consulta ejecutado correctamente (sin resultados adicionales).";
     }
 }
