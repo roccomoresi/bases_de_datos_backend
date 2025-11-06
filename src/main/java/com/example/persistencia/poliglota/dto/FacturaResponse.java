@@ -1,18 +1,20 @@
 package com.example.persistencia.poliglota.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+@Data
 @AllArgsConstructor
 public class FacturaResponse {
     private Integer idFactura;
-    private Integer usuarioId;
-    private LocalDateTime fechaEmision;
+    private Integer idUsuario;
+    private String nombreUsuario;
+    private String emailUsuario;
+    private String descripcionProceso;
     private String estado;
     private Double total;
-    private String descripcionProceso;
+    private String metodoPago;
+    private LocalDateTime fechaPago;
+    private LocalDateTime fechaEmision;
 }

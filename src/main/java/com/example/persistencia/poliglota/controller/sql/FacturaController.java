@@ -3,10 +3,11 @@ package com.example.persistencia.poliglota.controller.sql;
 import com.example.persistencia.poliglota.dto.FacturaCreateRequest;
 import com.example.persistencia.poliglota.dto.FacturaResponse;
 import com.example.persistencia.poliglota.model.sql.Factura;
+import com.example.persistencia.poliglota.model.sql.Pago;
 import com.example.persistencia.poliglota.model.sql.Usuario;
 import com.example.persistencia.poliglota.repository.sql.UsuarioRepository;
-import com.example.persistencia.poliglota.service.sql.FacturaService;
 import com.example.persistencia.poliglota.repository.sql.FacturaRepository;
+import com.example.persistencia.poliglota.service.sql.FacturaService;
 import com.example.persistencia.poliglota.service.sql.PagoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -33,76 +34,49 @@ public class FacturaController {
     public ResponseEntity<List<FacturaResponse>> listarFacturas(@PathVariable Integer idUsuario) {
         List<Factura> facturas = facturaService.obtenerFacturasPorUsuario(idUsuario);
 
-        List<FacturaResponse> resp = facturas.stream()
-                .map(f -> new FacturaResponse(
-                        f.getIdFactura(),
-                        f.getUsuario() != null ? f.getUsuario().getIdUsuario() : null,
-                        f.getFechaEmision(),
-                        f.getEstado().name(), // ✅ Asegura formato texto: "PENDIENTE", "PAGADA"
-                        f.getTotal(),
-                        f.getDescripcionProceso()
-                ))
-                .collect(Collectors.toList());
-
+        List<FacturaResponse> resp = facturas.stream().map(this::mapFacturaToResponse).collect(Collectors.toList());
         return ResponseEntity.ok(resp);
     }
 
     /* ───────────────────────────────
-       🧾 (Opcional) Listar todas las facturas del sistema
-       Útil para pruebas o panel admin
+       🧾 2. Listar todas las facturas (para Admin)
     ─────────────────────────────── */
     @GetMapping
     public ResponseEntity<List<FacturaResponse>> listarTodas() {
         List<Factura> facturas = facturaService.obtenerTodas();
-        List<FacturaResponse> resp = facturas.stream()
-                .map(f -> new FacturaResponse(
-                        f.getIdFactura(),
-                        f.getUsuario() != null ? f.getUsuario().getIdUsuario() : null,
-                        f.getFechaEmision(),
-                        f.getEstado().name(),
-                        f.getTotal(),
-                        f.getDescripcionProceso()
-                ))
-                .collect(Collectors.toList());
+
+        List<FacturaResponse> resp = facturas.stream().map(this::mapFacturaToResponse).collect(Collectors.toList());
         return ResponseEntity.ok(resp);
     }
 
     /* ───────────────────────────────
-       💰 2. Crear nueva factura (manual o desde admin)
+       💰 3. Crear nueva factura (manual o desde admin)
     ─────────────────────────────── */
     @PostMapping
-    public ResponseEntity<?> crearFactura(@RequestBody FacturaCreateRequest req) {
+    public ResponseEntity<FacturaResponse> crearFactura(@RequestBody FacturaCreateRequest req) {
         if (req.getIdUsuario() == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "El campo idUsuario es obligatorio"));
+            return ResponseEntity.badRequest()
+                    .body(null);
         }
-    
-        Usuario usuario = new Usuario();
-        usuario.setIdUsuario(req.getIdUsuario()); // ✅ solo referencia persistente
-    
+
+        Usuario usuario = usuarioRepository.findById(req.getIdUsuario())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
         Factura factura = new Factura();
         factura.setUsuario(usuario);
         factura.setTotal(req.getTotal());
         factura.setDescripcionProceso(req.getDescripcionProceso());
         factura.setEstado(Factura.EstadoFactura.PENDIENTE);
         factura.setFechaEmision(java.time.LocalDateTime.now());
-    
+
         Factura saved = facturaService.crearFactura(factura);
-    
-        FacturaResponse resp = new FacturaResponse(
-                saved.getIdFactura(),
-                saved.getUsuario().getIdUsuario(),
-                saved.getFechaEmision(),
-                saved.getEstado().name(),
-                saved.getTotal(),
-                saved.getDescripcionProceso()
-        );
-    
+        FacturaResponse resp = mapFacturaToResponse(saved);
+
         return ResponseEntity.ok(resp);
     }
-    
 
     /* ───────────────────────────────
-       ✅ 3. Marcar factura como pagada
+       ✅ 4. Marcar factura como pagada
     ─────────────────────────────── */
     @PutMapping("/{idFactura}/pagar")
     public ResponseEntity<FacturaResponse> pagarFactura(@PathVariable Integer idFactura) {
@@ -112,19 +86,83 @@ public class FacturaController {
         // Registrar pago por el total con método MANUAL
         pagoService.registrarPago(idFactura, factura.getTotal(), "MANUAL");
 
-        // Obtener estado actualizado
+        // Obtener factura actualizada
         Factura updated = facturaRepository.findById(idFactura)
                 .orElseThrow(() -> new RuntimeException("Factura no encontrada tras pago"));
 
-        FacturaResponse resp = new FacturaResponse(
-                updated.getIdFactura(),
-                updated.getUsuario() != null ? updated.getUsuario().getIdUsuario() : null,
-                updated.getFechaEmision(),
-                updated.getEstado().name(),
-                updated.getTotal(),
-                updated.getDescripcionProceso()
-        );
-
+        FacturaResponse resp = mapFacturaToResponse(updated);
         return ResponseEntity.ok(resp);
     }
+
+    /* ───────────────────────────────
+       📊 5. Reportes globales de facturación (solo admin)
+    ─────────────────────────────── */
+    @GetMapping("/reportes")
+    public ResponseEntity<Map<String, Object>> obtenerReportesGlobales() {
+        var facturas = facturaRepository.findAll();
+
+        var totalFacturado = facturas.stream()
+                .mapToDouble(Factura::getTotal)
+                .sum();
+
+        var porProceso = facturas.stream()
+                .collect(Collectors.groupingBy(
+                        Factura::getDescripcionProceso,
+                        Collectors.summingDouble(Factura::getTotal)
+                ));
+
+        var porEstado = facturas.stream()
+                .collect(Collectors.groupingBy(
+                        f -> f.getEstado().name(),
+                        Collectors.summingDouble(Factura::getTotal)
+                ));
+
+        var porUsuario = facturas.stream()
+                .filter(f -> f.getUsuario() != null)
+                .collect(Collectors.groupingBy(
+                        f -> f.getUsuario().getNombreCompleto(),
+                        Collectors.summingDouble(Factura::getTotal)
+                ));
+
+        Map<String, Object> reportes = Map.of(
+                "totalFacturado", totalFacturado,
+                "porProceso", porProceso,
+                "porEstado", porEstado,
+                "porUsuario", porUsuario
+        );
+
+        return ResponseEntity.ok(reportes);
+    }
+
+    /* ───────────────────────────────
+       🔧 Método privado: mapea Factura → DTO
+    ─────────────────────────────── */
+ private FacturaResponse mapFacturaToResponse(Factura f) {
+    var usuario = f.getUsuario();
+    Pago pago = null;
+    try {
+        // Busca el primer pago asociado sin depender del fetch lazy
+        var pagos = pagoService.obtenerPagosPorFactura(f.getIdFactura());
+        if (pagos != null && !pagos.isEmpty()) {
+            pago = pagos.get(0);
+        }
+    } catch (Exception e) {
+        System.err.println("⚠️ No se pudo obtener pagos de factura " + f.getIdFactura() + ": " + e.getMessage());
+    }
+
+    return new FacturaResponse(
+            f.getIdFactura(),
+            usuario != null ? usuario.getIdUsuario() : null,
+            usuario != null ? usuario.getNombreCompleto() : null,
+            usuario != null ? usuario.getEmail() : null,
+            f.getDescripcionProceso(),
+            f.getEstado().name(),
+            f.getTotal(),
+            pago != null ? pago.getMetodoPago() : "—",
+            pago != null ? pago.getFechaPago() : null,
+            f.getFechaEmision()
+    );
 }
+
+    }
+
