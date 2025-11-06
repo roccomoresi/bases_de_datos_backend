@@ -13,6 +13,8 @@ public interface SensorRepository extends CassandraRepository<Sensor, UUID> {
 
     List<Sensor> findByCiudad(String ciudad);
     List<Sensor> findByEstado(String estado);
+    List<Sensor> findByTipo(String tipo);
+    List<Sensor> findByNombre(String nombre);
 }
 
 

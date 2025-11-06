@@ -34,4 +34,13 @@ public class SensorService {
     public Sensor getById(UUID id) {
         return sensorRepository.findById(id).orElse(null);
     }
+
+    public List<Sensor> buscarPorTipo(String tipo) {
+    return sensorRepository.findByTipo(tipo);
+}
+
+public List<Sensor> buscarPorNombre(String nombre) {
+    return sensorRepository.findByNombre(nombre);
+}
+
 }

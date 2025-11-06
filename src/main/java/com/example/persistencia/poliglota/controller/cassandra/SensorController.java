@@ -62,4 +62,16 @@ public Map<String, Long> obtenerResumenSensores() {
     return resumen;
 }
 
+
+@GetMapping("/tipo/{tipo}")
+public List<Sensor> obtenerPorTipo(@PathVariable String tipo) {
+    return sensorService.buscarPorTipo(tipo);
+}
+
+// 🔹 Buscar sensores por nombre o código
+@GetMapping("/nombre/{nombre}")
+public List<Sensor> obtenerPorNombre(@PathVariable String nombre) {
+    return sensorService.buscarPorNombre(nombre);
+}
+
 }

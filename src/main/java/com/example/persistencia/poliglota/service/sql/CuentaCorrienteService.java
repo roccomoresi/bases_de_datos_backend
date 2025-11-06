@@ -6,6 +6,9 @@ import com.example.persistencia.poliglota.model.sql.Usuario;
 import com.example.persistencia.poliglota.repository.sql.CuentaCorrienteRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 @Service
@@ -50,4 +53,14 @@ public class CuentaCorrienteService {
         return cuentaCorrienteRepository.findByUsuario(usuario)
                 .orElseThrow(() -> new RuntimeException("Cuenta corriente no encontrada para el usuario"));
     }
+
+    public List<CuentaCorriente> obtenerTodas() {
+    return cuentaCorrienteRepository.findAll();
+}
+
+public CuentaCorriente obtenerPorId(Integer idCuenta) {
+    return cuentaCorrienteRepository.findById(idCuenta)
+            .orElseThrow(() -> new RuntimeException("Cuenta corriente no encontrada"));
+}
+
 }
