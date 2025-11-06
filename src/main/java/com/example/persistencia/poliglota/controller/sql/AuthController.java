@@ -11,6 +11,7 @@ import com.example.persistencia.poliglota.service.sql.RolService;
 import com.example.persistencia.poliglota.service.sql.SesionService;
 import com.example.persistencia.poliglota.service.sql.UsuarioService;
 import com.example.persistencia.poliglota.service.sql.CuentaCorrienteService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,9 +20,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 
+@Tag(name = "Auth", description = "Login / Register / Logout")
 @Slf4j
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
 
     private final UsuarioService usuarioService;

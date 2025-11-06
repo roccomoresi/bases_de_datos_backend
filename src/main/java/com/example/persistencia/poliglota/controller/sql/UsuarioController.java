@@ -141,6 +141,20 @@ public class UsuarioController {
     }
 
     /* ───────────────────────────────
+        📋 LISTAR Y BUSCAR
+    ────────────────────────────── */
+    // ✅ AGREGAR ACÁ DENTRO DE /usuarios
+    @GetMapping("/usuarios/email/{email}")
+    public ResponseEntity<Usuario> buscarPorEmail(@PathVariable String email) {
+        log.info("🔍 GET /api/sql/usuarios/email/{}", email);
+        return usuarioService.buscarPorEmail(email)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+
+
+    /* ───────────────────────────────
        🧩 ROLES (para el front)
     ─────────────────────────────── */
     // @GetMapping("/roles")

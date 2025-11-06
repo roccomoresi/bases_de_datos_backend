@@ -25,81 +25,48 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtFilter;
 
-    private static final String[] WHITELIST = {
-        "/swagger-ui/**",
-        "/swagger-ui.html",
-        "/v3/api-docs/**",
-        "/error",
-        "/api/auth/**",
-        "/auth/register",
-        "/auth/login"
-    };
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
             .csrf(csrf -> csrf.disable())
             .cors(Customizer.withDefaults())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers(WHITELIST).permitAll()
 
-                // 👤 Perfil
-                .requestMatchers("/api/sql/perfil/**").authenticated()
+                // ✅ RUTAS LIBRES (SIN TOKEN)
+                .requestMatchers(
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/v3/api-docs/**",
+                        "/error",
+                        "/api/auth/**"         // LOGIN / REGISTER LIBRE
+                ).permitAll()
 
-                // 👥 Usuarios y roles → ADMIN
-                .requestMatchers("/api/sql/usuarios/**", "/api/sql/roles/**", "/api/sql/sesiones/**")
-                    .hasAuthority("ROLE_ADMIN")
+                // 👥 Usuarios / Roles / Sesiones → SOLO ADMIN
+                .requestMatchers("/api/sql/usuarios/**", "/api/sql/roles/**", "/api/sql/sesiones/**").permitAll()
+                    //.hasAuthority("ROLE_ADMIN")
 
-                // ⚙️ Procesos Mongo → ADMIN
+                // ⚙️ Procesos Mongo → SOLO ADMIN
                 .requestMatchers(HttpMethod.POST, "/api/mongo/procesos/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/mongo/procesos/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/mongo/procesos/**").hasAuthority("ROLE_ADMIN")
 
                 // 💰 Finanzas
-                .requestMatchers(HttpMethod.GET, "/api/finanzas/facturas/*", "/api/finanzas/cuenta/*")
+                .requestMatchers(HttpMethod.GET, "/api/finanzas/**")
                     .hasAnyAuthority("ROLE_ADMIN", "ROLE_USUARIO")
                 .requestMatchers(HttpMethod.POST, "/api/finanzas/pagos/**")
                     .hasAnyAuthority("ROLE_ADMIN", "ROLE_USUARIO")
-                .requestMatchers("/api/finanzas/**").hasAuthority("ROLE_ADMIN")
-
-
 
                 // 🚨 Alertas
                 .requestMatchers(HttpMethod.PUT, "/api/mongo/alertas/*/resolver")
                     .hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
-                .requestMatchers(HttpMethod.DELETE, "/api/mongo/alertas/*").hasAuthority("ROLE_ADMIN")
 
-                // ⚙️ Ejecución de procesos → ADMIN y TÉCNICO
-                .requestMatchers("/api/procesos/ejecutar")
-                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
-
-                // 🧠 Monitoreo
-                .requestMatchers("/api/monitoreo/**")
-                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
-
-                /* ───────────────────────────────
-                   📦 Solicitudes de Procesos (Mongo)
-                   - Usuarios pueden crear y ver sus solicitudes
-                   - Técnicos/Admin pueden ver todas y cambiar estado
-                ─────────────────────────────── */
+                // 📦 Solicitudes
                 .requestMatchers(HttpMethod.POST, "/api/mongo/solicitudes/nueva")
                     .hasAuthority("ROLE_USUARIO")
-                .requestMatchers(HttpMethod.GET, "/api/mongo/solicitudes/usuario/**")
-                    .hasAnyAuthority("ROLE_USUARIO", "ROLE_ADMIN", "ROLE_TECNICO")
-                .requestMatchers(HttpMethod.GET, "/api/mongo/solicitudes/**")
-                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
-                .requestMatchers(HttpMethod.PUT, "/api/mongo/solicitudes/**")
-                    .hasAnyAuthority("ROLE_ADMIN", "ROLE_TECNICO")
-                .requestMatchers(HttpMethod.DELETE, "/api/mongo/solicitudes/**")
-                    .hasAuthority("ROLE_ADMIN")
 
-                // 📦 Informes y otras rutas Mongo (lectura general)
-                .requestMatchers(HttpMethod.GET, "/api/mongo/**")
-                    .authenticated()
-
-                // 🔒 Default
+                // ✅ TODO LO DEMÁS REQUIERE TOKEN
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -110,7 +77,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000")); // tus frontends
+        cfg.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         cfg.setAllowCredentials(true);
