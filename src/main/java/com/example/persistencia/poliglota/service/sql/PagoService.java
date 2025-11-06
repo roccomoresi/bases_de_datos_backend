@@ -23,7 +23,7 @@ public class PagoService {
     private final MovimientoCuentaService movimientoCuentaService;
     private final ApplicationEventPublisher eventPublisher;
 
-    // 🔹 Registrar pago (ya estaba correcto)
+    // 🔹 Registrar pago (ahora con DÉBITO en lugar de CREDITO)
     @Transactional
     public Pago registrarPago(Integer idFactura, Double montoPagado, String metodoPago) {
         Factura factura = facturaRepository.findById(idFactura)
@@ -39,15 +39,15 @@ public class PagoService {
         // Marcar factura como PAGADA (vía servicio)
         factura = facturaService.marcarComoPagada(idFactura);
 
-        // 🔹 Impacto contable del pago: CREDITO (suma saldo)
+        // 🔹 Impacto contable del pago: DÉBITO (resta saldo)
         CuentaCorriente cuenta = cuentaCorrienteService.crearSiNoExiste(factura.getUsuario());
         movimientoCuentaService.registrarMovimiento(
                 cuenta,
                 "Pago de factura #" + factura.getIdFactura(),
                 montoPagado,
-                MovimientoCuenta.TipoMovimiento.CREDITO
+                MovimientoCuenta.TipoMovimiento.DEBITO // ← cambio clave
         );
-        cuentaCorrienteService.actualizarSaldo(cuenta, montoPagado, true);
+        cuentaCorrienteService.actualizarSaldo(cuenta, montoPagado, false); // ← cambio clave
 
         // 🔔 Publicar evento para ejecución técnica asíncrona
         eventPublisher.publishEvent(new FacturaPagadaEvent(
@@ -69,7 +69,7 @@ public class PagoService {
         return pagoRepository.findByFactura_IdFactura(idFactura);
     }
 
-    // 🔹 Obtener pagos por usuario (ya lo tenías)
+    // 🔹 Obtener pagos por usuario
     public List<Pago> obtenerPagosPorUsuario(Integer idUsuario) {
         return pagoRepository.findByFactura_Usuario_IdUsuario(idUsuario);
     }

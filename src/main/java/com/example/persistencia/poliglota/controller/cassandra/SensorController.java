@@ -4,7 +4,9 @@ import com.example.persistencia.poliglota.model.cassandra.Sensor;
 import com.example.persistencia.poliglota.service.cassandra.SensorService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -43,4 +45,21 @@ public class SensorController {
     public List<Sensor> obtenerPorEstado(@PathVariable String estado) {
         return sensorService.buscarPorEstado(estado);
     }
+
+    @GetMapping("/resumen")
+public Map<String, Long> obtenerResumenSensores() {
+    List<Sensor> sensores = sensorService.getAll();
+
+    long activos = sensores.stream().filter(s -> "activo".equalsIgnoreCase(s.getEstado())).count();
+    long inactivos = sensores.stream().filter(s -> "inactivo".equalsIgnoreCase(s.getEstado())).count();
+    long fallas = sensores.stream().filter(s -> "falla".equalsIgnoreCase(s.getEstado())).count();
+
+    Map<String, Long> resumen = new HashMap<>();
+    resumen.put("activos", activos);
+    resumen.put("inactivos", inactivos);
+    resumen.put("falla", fallas);
+
+    return resumen;
+}
+
 }
