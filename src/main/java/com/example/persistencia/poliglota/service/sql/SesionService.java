@@ -50,6 +50,11 @@ public void cerrarSesion(Long idSesion) {  // 👈 también Long
     sesionRepository.save(sesion);
 }
 
+public List<Sesion> obtenerTodasLasSesiones() {
+    return sesionRepository.findAll();
+}
+
+
 
     // 🔹 Se usa por el ADMIN para ver sesiones activas
     public List<Sesion> obtenerSesionesActivas() {
