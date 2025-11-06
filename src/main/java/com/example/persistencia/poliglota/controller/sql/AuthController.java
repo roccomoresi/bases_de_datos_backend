@@ -93,33 +93,34 @@ public class AuthController {
             default -> "ROLE_USUARIO";
         };
 
-        // ✅ Registrar sesión
         Sesion sesion = sesionService.registrarInicioSesion(u.getIdUsuario(), rolDesc);
-
-        // ✅ Generar token JWT
         String token = jwtService.generarToken(u);
 
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("token", token);
+        resp.put("usuario", u);
+        resp.put("idSesion", sesion.getIdSesion()); // 👈 nuevo campo
 
+        log.info("✅ Login exitoso: {} ({}) [idSesion={}]", u.getEmail(), springRole, sesion.getIdSesion());
+        return ResponseEntity.ok(resp);
 
-        log.info("✅ Login exitoso: {} ({})", u.getEmail(), springRole);
-
-        return ResponseEntity.ok(new AuthResponse(token, u));
     }
 
     /* ───────────────────────────────
        🚪 LOGOUT
     ─────────────────────────────── */
-    @PutMapping("/logout/{idSesion}")
-    public ResponseEntity<String> logout(@PathVariable Integer idSesion) {
-        try {
-            sesionService.cerrarSesion(idSesion);
-            log.info("🚪 Sesión cerrada correctamente (ID: {})", idSesion);
-            return ResponseEntity.ok("Sesión cerrada correctamente");
-        } catch (Exception e) {
-            log.error("❌ Error al cerrar sesión: {}", e.getMessage());
-            return ResponseEntity.status(500).body("Error al cerrar la sesión");
-        }
+@PutMapping("/logout/{idSesion}")
+public ResponseEntity<String> logout(@PathVariable Long idSesion) {  // 👈 cambiá a Long
+    try {
+        sesionService.cerrarSesion(idSesion); // 👈 también Long
+        log.info("🚪 Sesión cerrada correctamente (ID: {})", idSesion);
+        return ResponseEntity.ok("Sesión cerrada correctamente");
+    } catch (Exception e) {
+        log.error("❌ Error al cerrar sesión: {}", e.getMessage());
+        return ResponseEntity.status(500).body("Error al cerrar la sesión");
     }
+}
+
 
     /* ───────────────────────────────
        🧾 REGISTER

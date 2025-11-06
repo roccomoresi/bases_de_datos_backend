@@ -1,72 +1,45 @@
 package com.example.persistencia.poliglota.controller.sql;
 
+import com.example.persistencia.poliglota.dto.SesionResponse;
 import com.example.persistencia.poliglota.model.sql.Sesion;
-import com.example.persistencia.poliglota.model.sql.Usuario;
 import com.example.persistencia.poliglota.service.sql.SesionService;
-import com.example.persistencia.poliglota.service.sql.UsuarioService;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
 
-@Slf4j
+@Tag(name = "Sesiones", description = "Gestión de sesiones de usuarios (solo visible para ADMIN)")
 @RestController
 @RequestMapping("/api/sql/sesiones")
 public class SesionController {
 
     private final SesionService sesionService;
 
-    @Autowired
-    private final UsuarioService usuarioService;
-
-    
-
-            public SesionController(SesionService sesionService, UsuarioService usuarioService) {
+    public SesionController(SesionService sesionService) {
         this.sesionService = sesionService;
-        this.usuarioService = usuarioService;
     }
 
-            @GetMapping("/usuarios/{id}/sesiones")
-        public ResponseEntity<List<Sesion>> obtenerHistorial(@PathVariable Integer id) {
-            List<Sesion> sesiones = sesionService.obtenerHistorialSesiones(id);
-            return ResponseEntity.ok(sesiones);
-        }
-        
+    @GetMapping("/activas")
+    public ResponseEntity<?> listarSesionesActivas() {
+        List<Sesion> activas = sesionService.obtenerSesionesActivas();
+
+        List<SesionResponse> resp = activas.stream()
+        .map(s -> new SesionResponse(
+                s.getIdSesion(),
+                s.getUsuario().getIdUsuario(),
+                s.getUsuario().getNombreCompleto(),
+                s.getUsuario().getEmail(),
+                s.getRol(),
+                s.getFechaInicio(),
+                s.getEstado().name()
+        ))
+        .toList();
 
 
-            @PostMapping("/iniciar/{usuarioId}")
-            public ResponseEntity<Sesion> iniciarSesion(@PathVariable Integer usuarioId) {
-                Usuario usuario = usuarioService.buscarPorId(usuarioId)
-                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-                String rol = usuario.getRol().getDescripcion();
-                Sesion sesion = sesionService.registrarInicioSesion(usuarioId, rol);
-                return ResponseEntity.ok(sesion);
-            }
 
-
-
-        /* 🚪 PUT cerrar sesión */
-    @PutMapping("/cerrar/{idSesion}")
-    public ResponseEntity<String> cerrarSesion(@PathVariable Integer idSesion) {
-        sesionService.cerrarSesion(idSesion);
-        return ResponseEntity.ok("Sesión cerrada correctamente");
-    }
-
-    @GetMapping
-    public List<Sesion> getAll() {
-        return sesionService.getAll();
-    }
-
-    @PostMapping
-    public Sesion create(@RequestBody Sesion sesion) {
-        return sesionService.save(sesion);
-    }
-
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Integer id) {
-        sesionService.delete(id);
+        return ResponseEntity.ok(resp);
     }
 }

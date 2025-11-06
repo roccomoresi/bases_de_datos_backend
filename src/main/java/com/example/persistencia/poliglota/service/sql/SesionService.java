@@ -1,61 +1,62 @@
 package com.example.persistencia.poliglota.service.sql;
 
+
+import com.example.persistencia.poliglota.model.sql.EstadoSesion;
 import com.example.persistencia.poliglota.model.sql.Sesion;
+import com.example.persistencia.poliglota.model.sql.Usuario;
 import com.example.persistencia.poliglota.repository.sql.SesionRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 public class SesionService {
-    private final SesionRepository repository;
 
-    public SesionService(SesionRepository repository) {
-        this.repository = repository;
+    private final SesionRepository sesionRepository;
+    private final UsuarioService usuarioService;
+
+    public SesionService(SesionRepository sesionRepository, UsuarioService usuarioService) {
+        this.sesionRepository = sesionRepository;
+        this.usuarioService = usuarioService;
     }
 
-    public List<Sesion> obtenerHistorialSesiones(Integer usuarioId) {
-    return repository.findByUsuario_IdUsuario(usuarioId);
+    // 🔹 Se usa al hacer login
+    public Sesion registrarInicioSesion(Integer idUsuario, String rol) {
+        Usuario usuario = usuarioService.buscarPorId(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        Sesion sesion = new Sesion();
+        sesion.setUsuario(usuario);
+        sesion.setRol(rol);
+        sesion.setFechaInicio(LocalDateTime.now());
+        sesion.setEstado(EstadoSesion.ACTIVA);
+
+        Sesion guardada = sesionRepository.save(sesion);
+        log.info("✅ Sesión iniciada para usuario {} (idSesion={})", usuario.getEmail(), guardada.getIdSesion());
+        return guardada;
+    }
+
+    // 🔹 Se usa al hacer logout
+    @Transactional
+public void cerrarSesion(Long idSesion) {  // 👈 también Long
+    Sesion sesion = sesionRepository.findById(idSesion)
+            .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+    sesion.setEstado(EstadoSesion.INACTIVA);
+    sesion.setFechaCierre(LocalDateTime.now());
+    sesionRepository.save(sesion);
 }
 
-/* 📅 Registrar inicio de sesión */
-public Sesion registrarInicioSesion(Integer usuarioId, String rolDescripcion) {
-    Sesion sesion = new Sesion();
-    sesion.setFechaInicio(LocalDateTime.now());
-    sesion.setEstado("activa");
-    sesion.setRol(rolDescripcion.toUpperCase()); // ⚡ ahora seteamos el rol
 
-    var usuario = new com.example.persistencia.poliglota.model.sql.Usuario();
-    usuario.setIdUsuario(usuarioId);
-    sesion.setUsuario(usuario);
-
-    return repository.save(sesion);
-}
-
-
-
-     /* 🚪 Registrar cierre de sesión */
-    public void cerrarSesion(Integer idSesion) {
-        Sesion sesion = repository.findById(idSesion)
-                .orElseThrow(() -> new IllegalArgumentException("Sesión no encontrada"));
-        sesion.setFechaCierre(LocalDateTime.now());
-        sesion.setEstado("cerrada");
-        repository.save(sesion);
+    // 🔹 Se usa por el ADMIN para ver sesiones activas
+    public List<Sesion> obtenerSesionesActivas() {
+        List<Sesion> activas = sesionRepository.findByEstado(EstadoSesion.ACTIVA);
+        log.info("📊 Sesiones activas encontradas: {}", activas.size());
+        return activas;
     }
 
 
-    public List<Sesion> getAll() {
-        return repository.findAll();
-    }
-
-    public Sesion save(Sesion sesion) {
-        return repository.save(sesion);
-    }
-
-    public void delete(Integer id) {
-        repository.deleteById(id);
-    }
 }

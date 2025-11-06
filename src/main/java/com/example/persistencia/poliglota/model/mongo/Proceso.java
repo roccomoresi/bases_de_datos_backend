@@ -1,7 +1,15 @@
 package com.example.persistencia.poliglota.model.mongo;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.OneToMany;
 
 /**
  * Modelo Mongo de Proceso (solo ASCII, sin emojis ni comillas curvas).
@@ -16,6 +24,10 @@ public class Proceso {
     private String tipo;   // informe, alerta, servicio, etc.
     private Double costo;  // usado para facturar
     private boolean activo = true;
+
+    @OneToMany(mappedBy = "proceso", cascade = CascadeType.ALL)
+    @JsonBackReference
+    private List<SolicitudProceso> solicitudes = new ArrayList<>();
 
     // ----- Constructores -----
     public Proceso() {}
@@ -59,5 +71,13 @@ public class Proceso {
                 ", costo=" + costo +
                 ", activo=" + activo +
                 '}';
+    }
+
+    public List<SolicitudProceso> getSolicitudes() {
+        return solicitudes;
+    }
+
+    public void setSolicitudes(List<SolicitudProceso> solicitudes) {
+        this.solicitudes = solicitudes;
     }
 }
