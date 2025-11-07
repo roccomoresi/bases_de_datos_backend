@@ -5,11 +5,11 @@ import com.example.persistencia.poliglota.model.sql.*;
 import com.example.persistencia.poliglota.repository.sql.FacturaRepository;
 import com.example.persistencia.poliglota.repository.sql.PagoRepository;
 import jakarta.transaction.Transactional;
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -23,48 +23,66 @@ public class PagoService {
     private final MovimientoCuentaService movimientoCuentaService;
     private final ApplicationEventPublisher eventPublisher;
 
-    // 🔹 Registrar pago (ahora con DÉBITO en lugar de CREDITO)
+    /**
+     * 💰 Registra un pago, actualiza contabilidad y dispara el evento técnico.
+     */
     @Transactional
     public Pago registrarPago(Integer idFactura, Double montoPagado, String metodoPago) {
+        // 1️⃣ Buscar factura
         Factura factura = facturaRepository.findById(idFactura)
-                .orElseThrow(() -> new RuntimeException("Factura no encontrada"));
+                .orElseThrow(() -> new RuntimeException("Factura no encontrada con id: " + idFactura));
 
-        Pago pago = new Pago();
-        pago.setFactura(factura);
-        pago.setMontoPagado(montoPagado);
-        pago.setMetodoPago(metodoPago);
-        pago.setFechaPago(LocalDateTime.now());
+        // 2️⃣ Registrar el pago
+        Pago pago = Pago.builder()
+                .factura(factura)
+                .montoPagado(montoPagado)
+                .metodoPago(metodoPago)
+                .fechaPago(LocalDateTime.now())
+                .build();
+
         Pago savedPago = pagoRepository.save(pago);
 
-        // Marcar factura como PAGADA (vía servicio)
+        // 3️⃣ Marcar factura como pagada
         factura = facturaService.marcarComoPagada(idFactura);
 
-        // 🔹 Impacto contable del pago: DÉBITO (resta saldo)
+        // 4️⃣ Impacto contable (resta saldo al usuario)
         CuentaCorriente cuenta = cuentaCorrienteService.crearSiNoExiste(factura.getUsuario());
         movimientoCuentaService.registrarMovimiento(
                 cuenta,
                 "Pago de factura #" + factura.getIdFactura(),
                 montoPagado,
-                MovimientoCuenta.TipoMovimiento.DEBITO // ← cambio clave
+                MovimientoCuenta.TipoMovimiento.DEBITO
         );
-        cuentaCorrienteService.actualizarSaldo(cuenta, montoPagado, false); // ← cambio clave
+        cuentaCorrienteService.actualizarSaldo(cuenta, montoPagado, false);
 
-        // 🔔 Publicar evento para ejecución técnica asíncrona
-        eventPublisher.publishEvent(new FacturaPagadaEvent(
-                factura.getIdFactura(),
-                factura.getUsuario() != null ? factura.getUsuario().getIdUsuario() : null,
-                factura.getDescripcionProceso()
-        ));
+        // 5️⃣ Publicar evento (SQL → Mongo/Cassandra)
+        try {
+            eventPublisher.publishEvent(new FacturaPagadaEvent(
+                    factura.getIdFactura(),
+                    factura.getUsuario() != null ? factura.getUsuario().getIdUsuario() : null,
+                    factura.getDescripcionProceso(),
+                    factura.getProcesoId() // 🔗 nuevo: vincula la factura con el proceso Mongo
+            ));
+
+            System.out.printf(
+                    "📨 Evento FacturaPagadaEvent emitido: factura=%d, usuario=%d, proceso=%s%n",
+                    factura.getIdFactura(),
+                    factura.getUsuario() != null ? factura.getUsuario().getIdUsuario() : null,
+                    factura.getProcesoId()
+            );
+        } catch (Exception e) {
+            System.err.println("⚠️ Error al emitir FacturaPagadaEvent: " + e.getMessage());
+        }
 
         return savedPago;
     }
 
-    // 🔹 Listar todos los pagos (para GET /pagos)
+    // 🔹 Listar todos los pagos
     public List<Pago> getAll() {
         return pagoRepository.findAll();
     }
 
-    // 🔹 Obtener pagos por factura (para GET /pagos/factura/{id})
+    // 🔹 Obtener pagos por factura
     public List<Pago> obtenerPagosPorFactura(Integer idFactura) {
         return pagoRepository.findByFactura_IdFactura(idFactura);
     }
@@ -74,6 +92,7 @@ public class PagoService {
         return pagoRepository.findByFactura_Usuario_IdUsuario(idUsuario);
     }
 
+    // 🔹 Alias de getAll (por compatibilidad con otros servicios)
     public List<Pago> obtenerTodos() {
         return pagoRepository.findAll();
     }

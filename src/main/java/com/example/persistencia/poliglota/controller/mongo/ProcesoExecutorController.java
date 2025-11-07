@@ -21,9 +21,9 @@ public class ProcesoExecutorController {
     }
 
     /**
-     * Ejecuta un proceso en Mongo y genera la factura en SQL.
+     * Ejecuta manualmente un proceso técnico (sin crear factura nueva).
      * Ejemplo:
-     * POST /api/procesos/ejecutar?usuarioId=1&procesoId=a542b825-f7c7-48b3-bd33-5e044dad48c5
+     * POST /api/procesos/ejecutar?usuarioId=1&procesoId=PROC-001
      */
     @PostMapping("/ejecutar")
     public ResponseEntity<Map<String, Object>> ejecutar(
@@ -31,14 +31,14 @@ public class ProcesoExecutorController {
             @RequestParam String procesoId
     ) {
         try {
-            // El service DEBE devolver Map<String,Object>
-            Map<String, Object> body = executorService.ejecutarProceso(usuarioId, procesoId);
+            String resultado = executorService.ejecutarProceso(usuarioId, procesoId);
 
-            // Enriquecemos la respuesta con metadatos útiles
+            Map<String, Object> body = new HashMap<>();
             body.put("usuarioId", usuarioId);
             body.put("procesoId", procesoId);
-            body.putIfAbsent("status", "OK");
+            body.put("resultado", resultado);
             body.put("timestamp", LocalDateTime.now());
+            body.put("status", "OK");
 
             return ResponseEntity.ok(body);
 

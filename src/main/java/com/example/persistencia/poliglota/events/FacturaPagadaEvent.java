@@ -9,11 +9,13 @@ public class FacturaPagadaEvent {
     private final Integer facturaId;
     private final Integer usuarioId;
     private final String descripcionProceso;
+    private final String procesoId; // 🔗 vínculo técnico con Mongo
 
-    public FacturaPagadaEvent(Integer facturaId, Integer usuarioId, String descripcionProceso) {
+    public FacturaPagadaEvent(Integer facturaId, Integer usuarioId, String descripcionProceso, String procesoId) {
         this.facturaId = facturaId;
         this.usuarioId = usuarioId;
         this.descripcionProceso = descripcionProceso;
+        this.procesoId = procesoId;
     }
 
     public Integer getFacturaId() {
@@ -27,5 +29,8 @@ public class FacturaPagadaEvent {
     public String getDescripcionProceso() {
         return descripcionProceso;
     }
-}
 
+    public String getProcesoId() {
+        return procesoId;
+    }
+}

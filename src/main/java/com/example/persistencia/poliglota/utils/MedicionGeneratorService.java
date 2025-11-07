@@ -4,7 +4,6 @@ import com.example.persistencia.poliglota.model.cassandra.Medicion;
 import com.example.persistencia.poliglota.model.cassandra.Sensor;
 import com.example.persistencia.poliglota.repository.cassandra.SensorRepository;
 import com.example.persistencia.poliglota.service.cassandra.MedicionService;
-
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -19,10 +18,7 @@ public class MedicionGeneratorService {
     private final MedicionService medicionService;
     private final SensorRepository sensorRepository;
     private final Random random = new Random();
-
-    // contador interno para simular el paso de los días
     private long ciclosEjecutados = 0;
-    
 
     public MedicionGeneratorService(MedicionService medicionService, SensorRepository sensorRepository) {
         this.medicionService = medicionService;
@@ -30,20 +26,18 @@ public class MedicionGeneratorService {
     }
 
     /**
-     * 🔄 Genera mediciones automáticas cada 10 segundos
-     * con fechas simuladas distribuidas entre horas y días.
+     * 🔄 Genera mediciones automáticas cada 10 segundos con algunas anomalías aleatorias.
      */
     @Scheduled(fixedRate = 10000)
     public void generarMedicionesAutomaticas() {
         List<Sensor> sensores = sensorRepository.findAll();
-
         if (sensores.isEmpty()) {
             System.out.println("⚠️ No hay sensores cargados en Cassandra.");
             return;
         }
 
         ciclosEjecutados++;
-        System.out.println("⏱️ Ciclo de generación #" + ciclosEjecutados);
+        System.out.println("⏱️ Ciclo #" + ciclosEjecutados + " — Generando mediciones...");
 
         for (int i = 0; i < sensores.size(); i++) {
             Sensor sensor = sensores.get(i);
@@ -51,10 +45,9 @@ public class MedicionGeneratorService {
                 double temperatura = generarTemperatura(sensor.getPais());
                 double humedad = generarHumedad(sensor.getPais());
 
-                // 🕒 Fecha simulada: cada sensor separado 1 hora, más offset diario según ciclo
                 Instant fechaMedicion = Instant.now()
-                        .minus(i, ChronoUnit.HOURS)       // cada sensor 1 hora antes
-                        .minus(ciclosEjecutados, ChronoUnit.DAYS); // cada ciclo, un día atrás
+                        .minus(i, ChronoUnit.HOURS)
+                        .minus(ciclosEjecutados, ChronoUnit.DAYS);
 
                 Medicion medicion = new Medicion(
                         sensor.getId(),
@@ -66,9 +59,14 @@ public class MedicionGeneratorService {
                 );
 
                 medicionService.guardar(medicion);
-                System.out.printf("🌡️ [%s] %s | %.1f°C | %.1f%% | fecha=%s%n",
-                        sensor.getNombre(), sensor.getCiudad(),
-                        temperatura, humedad, fechaMedicion);
+
+                if (temperatura > 45 || temperatura < 0 || humedad > 90 || humedad < 10) {
+                    System.out.printf("🚨 Alerta simulada [%s] %.1f°C / %.1f%% (%s)%n",
+                            sensor.getCiudad(), temperatura, humedad, sensor.getPais());
+                } else if (random.nextDouble() < 0.05) {
+                    System.out.printf("ℹ️ Pico leve [%s] %.1f°C / %.1f%%%n",
+                            sensor.getCiudad(), temperatura, humedad);
+                }
 
             } catch (Exception e) {
                 System.err.println("❌ Error generando medición para " + sensor.getNombre() + ": " + e.getMessage());
@@ -77,31 +75,39 @@ public class MedicionGeneratorService {
     }
 
     private double generarTemperatura(String pais) {
-    final double MIN_TEMP = 1.0;
-    final double MAX_TEMP = 60.0;
-    final double RANGO_TOTAL = MAX_TEMP - MIN_TEMP;
+        double base, variacion;
+        switch (pais.toLowerCase()) {
+            case "argentina" -> { base = 25; variacion = 8; }
+            case "uruguay" -> { base = 23; variacion = 7; }
+            case "chile" -> { base = 20; variacion = 9; }
+            case "noruega" -> { base = 5; variacion = 6; }
+            default -> { base = 22; variacion = 10; }
+        }
 
-    return switch (pais.toLowerCase()) {
-        case "argentina" -> MIN_TEMP + random.nextDouble() * RANGO_TOTAL;
-        case "uruguay" -> MIN_TEMP + random.nextDouble() * (RANGO_TOTAL * 0.9);
-        case "chile" -> MIN_TEMP + random.nextDouble() * RANGO_TOTAL;
-        case "noruega" -> MIN_TEMP + random.nextDouble() * (RANGO_TOTAL * 0.6) + (RANGO_TOTAL * 0.4);
-        default -> MIN_TEMP + random.nextDouble() * RANGO_TOTAL;
-    };
-}
+        // 🌡️ 10% de probabilidad de generar un pico extremo
+        if (random.nextDouble() < 0.10) {
+            double spike = (random.nextBoolean() ? 1 : -1) * (15 + random.nextDouble() * 15);
+            return base + spike;
+        }
 
-private double generarHumedad(String pais) {
-    final double MIN_HUM = 1.0;
-    final double MAX_HUM = 100.0;
-    final double RANGO_TOTAL = MAX_HUM - MIN_HUM;
+        return base + (random.nextDouble() * variacion * 2 - variacion);
+    }
 
-    return switch (pais.toLowerCase()) {
-        case "argentina", "uruguay" -> MIN_HUM + random.nextDouble() * RANGO_TOTAL;
-        case "chile" -> MIN_HUM + random.nextDouble() * (RANGO_TOTAL * 0.7);
-        case "noruega" -> MIN_HUM + random.nextDouble() * (RANGO_TOTAL * 0.3) + (RANGO_TOTAL * 0.7);
-        default -> MIN_HUM + random.nextDouble() * RANGO_TOTAL;
-    };
-    
-}
+    private double generarHumedad(String pais) {
+        double base, variacion;
+        switch (pais.toLowerCase()) {
+            case "argentina", "uruguay" -> { base = 60; variacion = 15; }
+            case "chile" -> { base = 50; variacion = 20; }
+            case "noruega" -> { base = 80; variacion = 10; }
+            default -> { base = 55; variacion = 20; }
+        }
 
+        // 💧 7% de probabilidad de anomalía extrema
+        if (random.nextDouble() < 0.07) {
+            double spike = (random.nextBoolean() ? 1 : -1) * (30 + random.nextDouble() * 20);
+            return Math.max(1, Math.min(100, base + spike));
+        }
+
+        return Math.max(1, Math.min(100, base + (random.nextDouble() * variacion * 2 - variacion)));
+    }
 }
