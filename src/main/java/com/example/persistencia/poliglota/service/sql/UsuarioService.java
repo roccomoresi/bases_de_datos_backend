@@ -44,6 +44,11 @@ public class UsuarioService {
         return usuarioRepository.findByEmail(email);
     }
 
+    public List<Usuario> listarPorRol(String rolDescripcion) {
+    return usuarioRepository.findByRolDescripcionIgnoreCase(rolDescripcion);
+}
+
+
     /* ───────────────────────────────
        🆕 CREAR USUARIO
     ─────────────────────────────── */

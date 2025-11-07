@@ -19,4 +19,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     // Buscar por rol
     List<Usuario> findByRol_Descripcion(String descripcion);
+
+    List<Usuario> findByRolDescripcionIgnoreCase(String descripcion);
+
 }

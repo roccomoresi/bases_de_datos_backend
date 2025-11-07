@@ -27,6 +27,12 @@ public class Alerta {
     private String fuente;        // origen de la alerta (manual, cassandra, etc.)
     private Map<String, Object> detalles = new HashMap<>();
 
+    // En Alerta.java (Mongo)
+    private Integer tecnicoAsignado;  // ID del usuario SQL asignado
+    private String nombreTecnico;     // opcional
+    private Instant fechaAsignacion;  // cuándo se asignó
+
+
     public Alerta() {}
 
     public Alerta(UUID id, String tipo, UUID sensorId, String ciudad, String pais,
@@ -86,4 +92,28 @@ public class Alerta {
 
     public Map<String, Object> getDetalles() { return detalles; }
     public void setDetalles(Map<String, Object> detalles) { this.detalles = detalles; }
+
+    public Integer getTecnicoAsignado() {
+        return tecnicoAsignado;
+    }
+
+    public void setTecnicoAsignado(Integer tecnicoAsignado) {
+        this.tecnicoAsignado = tecnicoAsignado;
+    }
+
+    public String getNombreTecnico() {
+        return nombreTecnico;
+    }
+
+    public void setNombreTecnico(String nombreTecnico) {
+        this.nombreTecnico = nombreTecnico;
+    }
+
+    public Instant getFechaAsignacion() {
+        return fechaAsignacion;
+    }
+
+    public void setFechaAsignacion(Instant fechaAsignacion) {
+        this.fechaAsignacion = fechaAsignacion;
+    }
 }

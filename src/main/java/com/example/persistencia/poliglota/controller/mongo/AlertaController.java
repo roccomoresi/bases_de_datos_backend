@@ -86,6 +86,26 @@ public class AlertaController {
         }
     }
 
+
+    @PutMapping("/{id}/asignar-manual")
+public ResponseEntity<?> asignarTecnicoManual(
+        @PathVariable UUID id,
+        @RequestParam Integer tecnicoId,
+        @RequestParam String nombreTecnico
+) {
+    try {
+        Alerta alertaActualizada = service.asignarTecnico(id, tecnicoId, nombreTecnico);
+        return ResponseEntity.ok(Map.of(
+                "mensaje", "Técnico asignado manualmente",
+                "tecnicoAsignado", nombreTecnico,
+                "alerta", alertaActualizada
+        ));
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Error al asignar técnico manualmente", "detalle", e.getMessage()));
+    }
+}
+
     // -----------------------------------------------------------------------
     // 🧩 RESOLVER ALERTA POR ID
     // Cambia el estado a "resuelta"
@@ -195,4 +215,74 @@ public ResponseEntity<List<Alerta>> getResueltas() {
     return ResponseEntity.ok(service.listarResueltas());
 }
 
+// -----------------------------------------------------------------------
+// 🤖 ASIGNAR AUTOMÁTICAMENTE UNA ALERTA A UN TÉCNICO DISPONIBLE (desde SQL)
+// Ejemplo: PUT /api/mongo/alertas/{id}/asignar-auto
+// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// 🤖 ASIGNAR AUTOMÁTICAMENTE UNA ALERTA A UN TÉCNICO DISPONIBLE (desde SQL)
+// Ejemplo: PUT /api/mongo/alertas/{id}/asignar-auto
+// -----------------------------------------------------------------------
+@PutMapping("/{id}/asignar-auto")
+public ResponseEntity<?> asignarTecnicoAutomatico(@PathVariable UUID id) {
+    try {
+        var restTemplate = new org.springframework.web.client.RestTemplate();
+
+        // 🔹 Consultamos técnicos desde el módulo SQL
+        var response = restTemplate.getForEntity(
+            "http://localhost:8080/api/sql/usuarios/tecnicos", List.class
+        );
+
+        if (!response.getStatusCode().is2xxSuccessful() ||
+            response.getBody() == null || response.getBody().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No se encontraron técnicos disponibles"));
+        }
+
+        // 🎲 Selecciona un técnico aleatorio de la lista
+        List<Map<String, Object>> listaTecnicos = (List<Map<String, Object>>) response.getBody();
+        Random random = new Random();
+        Map<String, Object> tecnicoMap = listaTecnicos.get(random.nextInt(listaTecnicos.size()));
+
+        // ✅ Convertir el ID correctamente sin importar el tipo
+        Object rawId = tecnicoMap.get("idUsuario");
+        Integer tecnicoId = rawId instanceof Integer ? (Integer) rawId :
+                rawId instanceof Long ? ((Long) rawId).intValue() :
+                rawId instanceof String ? Integer.parseInt((String) rawId) : null;
+
+        // ✅ Nombre técnico (seguro como String)
+        String nombreTecnico = String.valueOf(tecnicoMap.get("nombreCompleto"));
+
+        if (tecnicoId == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "No se pudo determinar el ID del técnico"));
+        }
+
+        // 🧩 Asignar técnico en Mongo
+        Alerta alertaActualizada = service.asignarTecnico(id, tecnicoId, nombreTecnico);
+
+        // 🧠 Log bonito para trazabilidad
+        System.out.printf(
+            "👷 Asignado automáticamente el técnico %s (ID=%d) a la alerta %s%n",
+            nombreTecnico, tecnicoId, id
+        );
+
+        return ResponseEntity.ok(Map.of(
+                "mensaje", "Alerta asignada automáticamente al técnico",
+                "tecnicoAsignado", nombreTecnico,
+                "alerta", alertaActualizada
+        ));
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Error al asignar técnico automáticamente", "detalle", e.getMessage()));
+    }
 }
+
+
+}
+
+
+
+
