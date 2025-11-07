@@ -40,7 +40,8 @@ public class SecurityConfig {
                         "/swagger-ui.html",
                         "/v3/api-docs/**",
                         "/error",
-                        "/api/auth/**"         // LOGIN / REGISTER LIBRE
+                        "/api/auth/**",
+                        "/api/mongo/alertas"      // LOGIN / REGISTER LIBRE
                 ).permitAll()
 
                 // 👥 Usuarios / Roles / Sesiones → SOLO ADMIN
