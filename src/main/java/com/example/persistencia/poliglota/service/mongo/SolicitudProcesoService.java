@@ -59,51 +59,82 @@ public class SolicitudProcesoService {
     ─────────────────────────────── */
     @Transactional
     public SolicitudProceso create(Integer usuarioId, String procesoId) {
-        // 1️⃣ Validar existencia del proceso
         Proceso proceso = procesoRepository.findById(procesoId)
                 .orElseThrow(() -> new RuntimeException("❌ Proceso no encontrado con id: " + procesoId));
 
-        // 2️⃣ Crear la solicitud en Mongo
         SolicitudProceso solicitud = new SolicitudProceso(usuarioId, proceso);
         solicitud.setEstado(EstadoProceso.PENDIENTE);
         solicitud.setResultado("A la espera de pago");
         repository.save(solicitud);
 
-        // 3️⃣ Generar factura pendiente (SQL)
         try {
-                facturaService.generarFacturaPendiente(
-                usuarioId,
-                "Solicitud del proceso: " + proceso.getNombre(),
-                proceso.getCosto().doubleValue(),
-                proceso.getId() // ✅ ahora sí pasa el id del proceso
+            facturaService.generarFacturaPendiente(
+                    usuarioId,
+                    "Solicitud del proceso: " + proceso.getNombre(),
+                    proceso.getCosto().doubleValue(),
+                    proceso.getId()
             );
-
             System.out.println("✅ Factura pendiente generada para el proceso " + proceso.getNombre());
         } catch (Exception e) {
             System.err.println("⚠️ Error generando factura pendiente: " + e.getMessage());
         }
 
-        // 4️⃣ Crear registro histórico (Mongo)
-        HistorialEjecucion log = new HistorialEjecucion(
+        historialService.save(new HistorialEjecucion(
                 proceso.getId(),
                 proceso.getNombre(),
                 usuarioId,
                 solicitud.getFechaSolicitud(),
                 LocalDateTime.now(),
                 "Solicitud creada — pendiente de pago"
-        );
-        historialService.save(log);
+        ));
 
-        // 5️⃣ Retornar solicitud
         return solicitud;
     }
 
     /* ───────────────────────────────
-       ✅ COMPLETAR SOLICITUD
+       🔄 ACTUALIZAR ESTADO Y RESULTADO
     ─────────────────────────────── */
-    public void completarSolicitudYRegistrarHistorial(SolicitudProceso solicitud, String resultado) {
-        solicitud.setEstado(EstadoProceso.COMPLETADO);
+    @Transactional
+    public SolicitudProceso updateEstadoYResultado(UUID id, EstadoProceso nuevoEstado, String resultado) {
+        SolicitudProceso solicitud = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("❌ Solicitud no encontrada con id: " + id));
+
+        solicitud.setEstado(nuevoEstado);
+
+        if (resultado != null && !resultado.isBlank()) {
+            solicitud.setResultado(resultado);
+        }
+
+        solicitud.setFechaActualizacion(LocalDateTime.now());
+        repository.save(solicitud);
+
+        String mensajeHistorial = (resultado != null && !resultado.isBlank())
+                ? resultado
+                : "Estado actualizado a " + nuevoEstado.name();
+
+        historialService.save(new HistorialEjecucion(
+                solicitud.getProceso().getId(),
+                solicitud.getProceso().getNombre(),
+                solicitud.getUsuarioId(),
+                solicitud.getFechaSolicitud(),
+                LocalDateTime.now(),
+                mensajeHistorial
+        ));
+
+        return solicitud;
+    }
+
+    /* ───────────────────────────────
+       📝 AGREGAR RESULTADO FINAL
+    ─────────────────────────────── */
+    @Transactional
+    public SolicitudProceso updateResultado(UUID id, String resultado) {
+        SolicitudProceso solicitud = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+
         solicitud.setResultado(resultado);
+        solicitud.setEstado(EstadoProceso.COMPLETADO);
+        solicitud.setFechaActualizacion(LocalDateTime.now());
         repository.save(solicitud);
 
         historialService.save(new HistorialEjecucion(
@@ -114,56 +145,16 @@ public class SolicitudProcesoService {
                 LocalDateTime.now(),
                 resultado
         ));
+
+        return solicitud;
     }
 
     /* ───────────────────────────────
-       🔄 ACTUALIZAR ESTADO
+       🔄 SOLO CAMBIAR ESTADO
     ─────────────────────────────── */
+    @Transactional
     public SolicitudProceso updateEstado(UUID id, EstadoProceso nuevoEstado) {
-        SolicitudProceso solicitud = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("❌ Solicitud no encontrada con id: " + id));
-
-        solicitud.setEstado(nuevoEstado);
-        repository.save(solicitud);
-
-        // 🧩 Si el proceso se completó, registramos en el historial
-        if (nuevoEstado == EstadoProceso.COMPLETADO && solicitud.getProceso() != null) {
-            HistorialEjecucion log = new HistorialEjecucion(
-                    solicitud.getProceso().getId(),
-                    solicitud.getProceso().getNombre(),
-                    solicitud.getUsuarioId(),
-                    solicitud.getFechaSolicitud(),
-                    LocalDateTime.now(),
-                    solicitud.getResultado() != null ? solicitud.getResultado() : "Sin resultado"
-            );
-            historialService.save(log);
-        }
-
-        return solicitud;
-    }
-
-    /* ───────────────────────────────
-       📝 AGREGAR RESULTADO
-    ─────────────────────────────── */
-    public SolicitudProceso updateResultado(UUID id, String resultado) {
-        SolicitudProceso solicitud = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
-
-        solicitud.setResultado(resultado);
-        solicitud.setEstado(EstadoProceso.COMPLETADO);
-        repository.save(solicitud);
-
-        // Actualizar historial más reciente
-        List<HistorialEjecucion> historial = historialService.getByProceso(solicitud.getProceso().getId());
-        if (!historial.isEmpty()) {
-            HistorialEjecucion ultimo = historial.get(historial.size() - 1);
-            if (ultimo.getUsuarioId() != null && ultimo.getUsuarioId().equals(solicitud.getUsuarioId())) {
-                ultimo.setResultado(resultado);
-                historialService.save(ultimo);
-            }
-        }
-
-        return solicitud;
+        return updateEstadoYResultado(id, nuevoEstado, null);
     }
 
     /* ───────────────────────────────

@@ -63,12 +63,13 @@ public class SolicitudProcesoController {
        🔄 ACTUALIZAR ESTADO
     ─────────────────────────────── */
     @PutMapping("/{id}/estado")
-    public ResponseEntity<SolicitudProceso> updateEstado(
-            @PathVariable UUID id,
-            @RequestParam EstadoProceso estado
-    ) {
-        return ResponseEntity.ok(solicitudService.updateEstado(id, estado));
-    }
+public ResponseEntity<SolicitudProceso> updateEstado(
+        @PathVariable UUID id,
+        @RequestParam EstadoProceso estado
+) {
+    return ResponseEntity.ok(solicitudService.updateEstado(id, estado));
+}
+
 
     /* ───────────────────────────────
        📝 AGREGAR RESULTADO
