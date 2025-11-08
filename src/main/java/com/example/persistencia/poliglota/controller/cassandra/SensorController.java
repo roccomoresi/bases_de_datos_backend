@@ -104,4 +104,28 @@ public class SensorController {
 
         return ResponseEntity.ok(resumen);
     }
+
+    // 🔹 Buscar sensores por filtros combinados
+@GetMapping("/buscar")
+public ResponseEntity<List<SensorDTO>> buscarSensores(
+        @RequestParam(required = false) String tipo,
+        @RequestParam(required = false) String estado,
+        @RequestParam(required = false) String nombre,
+        @RequestParam(required = false) String ciudad
+) {
+    // 1️⃣ Obtenemos todos (en Cassandra esto puede ser optimizado luego con índices)
+    List<Sensor> sensores = sensorService.getAll();
+
+    // 2️⃣ Filtramos en backend (de forma combinada)
+    List<SensorDTO> filtrados = sensores.stream()
+            .filter(s -> tipo == null || s.getTipo() != null && s.getTipo().equalsIgnoreCase(tipo))
+            .filter(s -> estado == null || s.getEstado() != null && s.getEstado().equalsIgnoreCase(estado))
+            .filter(s -> nombre == null || s.getNombre() != null && s.getNombre().toLowerCase().contains(nombre.toLowerCase()))
+            .filter(s -> ciudad == null || s.getCiudad() != null && s.getCiudad().equalsIgnoreCase(ciudad))
+            .map(SensorDTO::fromEntity)
+            .collect(Collectors.toList());
+
+    return ResponseEntity.ok(filtrados);
+}
+
 }
