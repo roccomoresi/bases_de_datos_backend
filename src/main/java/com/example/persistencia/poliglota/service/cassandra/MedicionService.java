@@ -28,22 +28,26 @@ public class MedicionService {
     private final MedicionPorRangoGlobalRepository medicionPorRangoGlobalRepository;
     private final CassandraOperations cassandraOperations;
     private final AlertaMongoClient alertaMongoClient;
+    private final SensorRepository sensorRepository;
 
-    public MedicionService(
-            MedicionPorSensorRepository medicionPorSensorRepository,
-            MedicionPorCiudadRepository medicionPorCiudadRepository,
-            MedicionPorPaisRepository medicionPorPaisRepository,
-            MedicionPorRangoGlobalRepository medicionPorRangoGlobalRepository,
-            CassandraOperations cassandraOperations,
-            AlertaMongoClient alertaMongoClient) {
+public MedicionService(
+    MedicionPorSensorRepository medicionPorSensorRepository,
+    MedicionPorCiudadRepository medicionPorCiudadRepository,
+    MedicionPorPaisRepository medicionPorPaisRepository,
+    MedicionPorRangoGlobalRepository medicionPorRangoGlobalRepository,
+    CassandraOperations cassandraOperations,
+    AlertaMongoClient alertaMongoClient,
+    SensorRepository sensorRepository // 👈 nuevo
+) {
+    this.medicionPorSensorRepository = medicionPorSensorRepository;
+    this.medicionPorCiudadRepository = medicionPorCiudadRepository;
+    this.medicionPorPaisRepository = medicionPorPaisRepository;
+    this.medicionPorRangoGlobalRepository = medicionPorRangoGlobalRepository;
+    this.cassandraOperations = cassandraOperations;
+    this.alertaMongoClient = alertaMongoClient;
+    this.sensorRepository = sensorRepository;
+}
 
-        this.medicionPorSensorRepository = medicionPorSensorRepository;
-        this.medicionPorCiudadRepository = medicionPorCiudadRepository;
-        this.medicionPorPaisRepository = medicionPorPaisRepository;
-        this.medicionPorRangoGlobalRepository = medicionPorRangoGlobalRepository;
-        this.cassandraOperations = cassandraOperations;
-        this.alertaMongoClient = alertaMongoClient;
-    }
 
     // 📊 Obtener todas las mediciones por sensor
     public List<MedicionPorSensor> obtenerPorSensor(UUID sensorId) {
@@ -181,6 +185,9 @@ public class MedicionService {
 
     private void evaluarAlertasAutomaticas(Medicion medicion) {
     try {
+        boolean alertaGenerada = false;
+
+        // 🔥 Temperatura muy alta
         if (medicion.getTemperatura() != null && medicion.getTemperatura() > 35.0) {
             alertaMongoClient.enviarAlerta(
                 medicion.getSensorId(),
@@ -192,8 +199,10 @@ public class MedicionService {
                 medicion.getHumedad(),
                 "alta"
             );
+            alertaGenerada = true;
         }
 
+        // 💧 Humedad baja
         if (medicion.getHumedad() != null && medicion.getHumedad() < 20.0) {
             alertaMongoClient.enviarAlerta(
                 medicion.getSensorId(),
@@ -205,12 +214,38 @@ public class MedicionService {
                 medicion.getHumedad(),
                 "media"
             );
+            alertaGenerada = true;
+        }
+
+        // ⚠️ Valores imposibles = sensor fallando
+        if (medicion.getTemperatura() != null &&
+            (medicion.getTemperatura() < -40 || medicion.getTemperatura() > 90)) {
+
+            alertaMongoClient.enviarAlerta(
+                medicion.getSensorId(),
+                "sensor",
+                "⚠️ Sensor " + medicion.getSensorId() + " reportó valores anómalos: "
+                        + medicion.getTemperatura() + "°C",
+                medicion.getCiudad(),
+                medicion.getPais(),
+                medicion.getTemperatura(),
+                medicion.getHumedad(),
+                "critica"
+            );
+
+            sensorRepository.updateEstado(medicion.getSensorId(), "falla");
+            alertaGenerada = true;
+        }
+
+        if (alertaGenerada) {
+            log.warn("🚨 Se generó alerta automática para sensor {}", medicion.getSensorId());
         }
 
     } catch (Exception e) {
         log.error("❌ Error al evaluar alertas automáticas: {}", e.getMessage());
     }
 }
+
 
     }
 

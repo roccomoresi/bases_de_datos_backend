@@ -1,6 +1,7 @@
 package com.example.persistencia.poliglota.service.mongo;
 
 import com.example.persistencia.poliglota.model.mongo.Alerta;
+import com.example.persistencia.poliglota.repository.cassandra.SensorRepository;
 import com.example.persistencia.poliglota.repository.mongo.AlertaRepository;
 import org.springframework.stereotype.Service;
 
@@ -13,10 +14,12 @@ import java.util.UUID;
 public class AlertaService {
 
     private final AlertaRepository repository;
+    private final SensorRepository sensorRepository;
 
-    public AlertaService(AlertaRepository repository) {
-        this.repository = repository;
-    }
+public AlertaService(AlertaRepository repository, SensorRepository sensorRepository) {
+    this.repository = repository;
+    this.sensorRepository = sensorRepository;
+}
 
     // 🌡️ CREACIÓN SIMPLE
     public Alerta crear(UUID sensorId, String tipo, String descripcion, String ciudad, String pais) {
@@ -78,6 +81,21 @@ public class AlertaService {
         };
     }
 
+public Alerta asignarTecnico(UUID id, Integer tecnicoId, String nombreTecnico) {
+    Alerta alerta = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("No se encontró la alerta con ID " + id));
+
+    alerta.setTecnicoAsignado(tecnicoId);
+    alerta.setNombreTecnico(nombreTecnico);
+    alerta.setFechaAsignacion(Instant.now());
+    alerta.getDetalles().put("asignado_por", "admin");
+    alerta.getDetalles().put("asignado_en", Instant.now().toString());
+
+    return repository.save(alerta);
+}
+
+
+
     // ---------------------------------------------------------------------
     // 🔍 OPERACIONES BÁSICAS
     // ---------------------------------------------------------------------
@@ -90,13 +108,25 @@ public class AlertaService {
     }
 
     public Alerta resolver(UUID id) {
-        Alerta alerta = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No se encontró la alerta con ID " + id));
-        alerta.setEstado("resuelta");
-        alerta.getDetalles().put("fecha_resolucion", Instant.now().toString());
-        alerta.getDetalles().put("resuelta_por", "sistema");
-        return repository.save(alerta);
+    Alerta alerta = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("No se encontró la alerta con ID " + id));
+
+    alerta.setEstado("resuelta");
+    alerta.getDetalles().put("fecha_resolucion", Instant.now().toString());
+    alerta.getDetalles().put("resuelta_por", "admin");
+
+    // ✅ Si está asociada a un sensor, lo reactivamos en Cassandra
+    if (alerta.getSensorId() != null) {
+        try {
+            sensorRepository.updateEstado(alerta.getSensorId(), "activo");
+        } catch (Exception e) {
+            alerta.getDetalles().put("warning", "No se pudo reactivar el sensor: " + e.getMessage());
+        }
     }
+
+    return repository.save(alerta);
+}
+
 
     public List<Alerta> buscarPorUbicacion(String ciudad, String pais) {
         return repository.findByCiudadAndPais(ciudad, pais);

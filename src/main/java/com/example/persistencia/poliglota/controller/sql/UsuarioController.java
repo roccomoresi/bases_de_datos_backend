@@ -76,6 +76,27 @@ public class UsuarioController {
         }
     }
 
+
+
+    /* ───────────────────────────────
+   🧑‍🔧 LISTAR USUARIOS CON ROL TÉCNICO
+─────────────────────────────── */
+@GetMapping("/usuarios/tecnicos")
+public ResponseEntity<List<Usuario>> listarTecnicos() {
+    log.info("👷 GET /api/sql/usuarios/tecnicos");
+    try {
+        List<Usuario> tecnicos = usuarioService.listarPorRol("TECNICO");
+        if (tecnicos.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(tecnicos);
+    } catch (Exception e) {
+        log.error("❌ Error al listar técnicos: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(null);
+    }
+}
+
     /* ───────────────────────────────
        ✏️ ACTUALIZAR USUARIO
     ─────────────────────────────── */
