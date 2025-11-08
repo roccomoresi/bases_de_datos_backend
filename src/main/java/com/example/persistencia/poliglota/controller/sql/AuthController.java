@@ -125,35 +125,41 @@ public ResponseEntity<String> logout(@PathVariable Long idSesion) {  // 👈 cam
     /* ───────────────────────────────
        🧾 REGISTER
     ─────────────────────────────── */
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody Usuario nuevo) {
-        log.info("🆕 Registro de nuevo usuario: {}", nuevo.getEmail());
+   @PostMapping("/register")
+public ResponseEntity<?> register(@RequestBody Usuario nuevo) {
+    log.info("🆕 Registro de nuevo usuario: {}", nuevo.getEmail());
 
-        if (usuarioService.buscarPorEmail(nuevo.getEmail()).isPresent()) {
-            return ResponseEntity.status(409).body("El email ya está registrado");
-        }
-
-        Rol rolAsignado;
-        if (nuevo.getRol() == null || nuevo.getRol().getIdRol() == null) {
-            rolAsignado = rolService.buscarPorDescripcion("USUARIO")
-                    .orElseThrow(() -> new RuntimeException("No se encontró el rol USUARIO"));
-        } else {
-            rolAsignado = rolService.buscarPorId(nuevo.getRol().getIdRol())
-                    .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
-        }
-        nuevo.setRol(rolAsignado);
-
-        // 🔐 Encriptar contraseña antes de guardar
-        nuevo.setContrasena(encoder.encode(nuevo.getContrasena()));
-
-        Usuario creado = usuarioService.crearUsuario(nuevo);
-
-        // 💰 La cuenta corriente se crea automáticamente (trigger SQL)
-
-        String token = jwtService.generarToken(creado);
-
-
-        log.info("✅ Usuario registrado correctamente: {}", nuevo.getEmail());
-        return ResponseEntity.ok(new AuthResponse(token, creado));
+    // 🔍 Validar si el correo ya existe
+    if (usuarioService.buscarPorEmail(nuevo.getEmail()).isPresent()) {
+        return ResponseEntity.status(409).body("El email ya está registrado");
     }
+
+    // 🧩 Asignar rol por defecto
+    Rol rolAsignado = rolService.buscarPorDescripcion("USUARIO")
+        .orElseThrow(() -> new RuntimeException("No se encontró el rol USUARIO"));
+    nuevo.setRol(rolAsignado);
+
+    // ✅ Activar usuario por defecto
+    nuevo.setEstado(Usuario.EstadoUsuario.ACTIVO);
+
+    // 🔐 Encriptar contraseña
+    nuevo.setContrasena(encoder.encode(nuevo.getContrasena()));
+
+    // 💾 Guardar usuario
+    Usuario creado = usuarioService.crearUsuario(nuevo);
+
+    // 💰 Crear cuenta corriente automáticamente
+    // try {
+    //     cuentaCorrienteService.crearCuentaParaUsuario(creado.getIdUsuario());
+    // } catch (Exception e) {
+    //     log.warn("⚠️ No se pudo crear cuenta corriente para usuario {}: {}", creado.getEmail(), e.getMessage());
+    // }
+
+    // 🔑 Generar token JWT
+    String token = jwtService.generarToken(creado);
+
+    log.info("✅ Usuario registrado correctamente: {}", nuevo.getEmail());
+    return ResponseEntity.ok(new AuthResponse(token, creado));
+}
+
 }
