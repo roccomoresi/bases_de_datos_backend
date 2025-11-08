@@ -17,7 +17,9 @@ public class ChatService {
         this.repository = repository;
     }
 
-    // 🔹 Crear un chat privado
+    // ─────────────────────────────────────────────────────────────────────────
+    // Crear un chat privado (2 participantes)
+    // ─────────────────────────────────────────────────────────────────────────
     public Chat crearChat(List<String> participantes) {
         Chat chat = new Chat();
         chat.setParticipantes(participantes);
@@ -26,7 +28,9 @@ public class ChatService {
         return repository.save(chat);
     }
 
-    // 🔹 Crear un grupo
+    // ─────────────────────────────────────────────────────────────────────────
+    // Crear un chat de grupo
+    // ─────────────────────────────────────────────────────────────────────────
     public Chat crearGrupo(String nombre, List<String> participantes) {
         Chat chat = new Chat();
         chat.setNombreGrupo(nombre);
@@ -36,34 +40,45 @@ public class ChatService {
         return repository.save(chat);
     }
 
-    // 🔹 Enviar mensaje
+    // ─────────────────────────────────────────────────────────────────────────
+    // Enviar mensaje
+    // ─────────────────────────────────────────────────────────────────────────
     public Chat enviarMensaje(String chatId, String remitente, String contenido) {
         Chat chat = repository.findById(chatId)
-                .orElseThrow(() -> new RuntimeException("No se encontró el chat con ID " + chatId));
+                .orElseThrow(() -> new RuntimeException("Chat no encontrado"));
 
         Chat.Mensaje mensaje = new Chat.Mensaje(remitente, contenido, Instant.now(), false);
         chat.getMensajes().add(mensaje);
         chat.setUltimaActualizacion(Instant.now());
+
         return repository.save(chat);
     }
 
-    // 🔹 Obtener un chat
+    // ─────────────────────────────────────────────────────────────────────────
+    // Obtener un chat por ID
+    // ─────────────────────────────────────────────────────────────────────────
     public Chat obtenerChat(String chatId) {
         return repository.findById(chatId)
                 .orElseThrow(() -> new RuntimeException("No se encontró el chat con ID " + chatId));
     }
 
-    // 🔹 Listar chats de un usuario
+    // ─────────────────────────────────────────────────────────────────────────
+    // Listar chats donde participa un usuario
+    // ─────────────────────────────────────────────────────────────────────────
     public List<Chat> listarChatsPorUsuario(String usuarioId) {
         return repository.findByParticipantesContaining(usuarioId);
     }
 
-    // 🔹 Listar todos los chats por fecha
+    // ─────────────────────────────────────────────────────────────────────────
+    // Listar todos los chats por fecha de última actualización (desc)
+    // ─────────────────────────────────────────────────────────────────────────
     public List<Chat> listarRecientes() {
         return repository.findAllByOrderByUltimaActualizacionDesc();
     }
 
-    // 🔹 Marcar mensaje como leído
+    // ─────────────────────────────────────────────────────────────────────────
+    // Marcar mensaje como LEÍDO
+    // ─────────────────────────────────────────────────────────────────────────
     public Chat marcarMensajeComoLeido(String chatId, int indexMensaje) {
         Chat chat = repository.findById(chatId)
                 .orElseThrow(() -> new RuntimeException("Chat no encontrado"));
@@ -77,7 +92,9 @@ public class ChatService {
         }
     }
 
-    // 🔹 Marcar mensaje como NO leído
+    // ─────────────────────────────────────────────────────────────────────────
+    // Marcar mensaje como NO LEÍDO
+    // ─────────────────────────────────────────────────────────────────────────
     public Chat marcarMensajeComoNoLeido(String chatId, int indexMensaje) {
         Chat chat = repository.findById(chatId)
                 .orElseThrow(() -> new RuntimeException("Chat no encontrado"));
@@ -91,23 +108,27 @@ public class ChatService {
         }
     }
 
-    // 🔹 Listar resumen de chats recientes (último mensaje)
-    public List<Map<String, Object>> listarRecientesResumido() {
+    // ─────────────────────────────────────────────────────────────────────────
+    // Resumen de chats recientes (para listas: último mensaje, remitente, etc.)
+    // ─────────────────────────────────────────────────────────────────────────
+    public List<Map<String, Object>> listarRecientesResumen() {
         List<Chat> chats = repository.findAllByOrderByUltimaActualizacionDesc();
+
         return chats.stream().map(chat -> {
             Map<String, Object> resumen = new HashMap<>();
-            resumen.put("idChat", chat.getId());
+            resumen.put("idchat", chat.getId());
 
-            // Evita NullPointerException si tipo es null
+            // tipo (evita NPE)
             String tipo = chat.getTipo() != null ? chat.getTipo() : "desconocido";
             resumen.put("tipo", tipo);
 
-            resumen.put("nombre", "grupo".equals(tipo)
-                    ? chat.getNombreGrupo()
-                    : String.join(", ", chat.getParticipantes()));
-            resumen.put("ultimaActualizacion", chat.getUltimaActualizacion());
+            // nombre (si es grupo)
+            if ("grupo".equals(tipo)) {
+                resumen.put("nombre", chat.getNombreGrupo());
+            }
 
-            if (!chat.getMensajes().isEmpty()) {
+            // último mensaje
+            if (chat.getMensajes() != null && !chat.getMensajes().isEmpty()) {
                 Chat.Mensaje ultimo = chat.getMensajes().get(chat.getMensajes().size() - 1);
                 resumen.put("ultimoMensaje", ultimo.getContenido());
                 resumen.put("remitente", ultimo.getRemitente());
@@ -118,11 +139,20 @@ public class ChatService {
                 resumen.put("leido", true);
             }
 
+            resumen.put("ultimaActualizacion", chat.getUltimaActualizacion());
+
+            // opcional: concatenar participantes para mostrar
+            if (chat.getParticipantes() != null) {
+                resumen.put("participantes", String.join(", ", chat.getParticipantes()));
+            }
+
             return resumen;
         }).collect(Collectors.toList());
     }
 
-    // 🗑️ Eliminar un chat por ID
+    // ─────────────────────────────────────────────────────────────────────────
+    // Eliminar un chat completo
+    // ─────────────────────────────────────────────────────────────────────────
     public void eliminarChat(String chatId) {
         if (!repository.existsById(chatId)) {
             throw new RuntimeException("No se encontró el chat con ID " + chatId);
@@ -130,7 +160,9 @@ public class ChatService {
         repository.deleteById(chatId);
     }
 
-    // 🗑️ Eliminar un mensaje por índice dentro del chat
+    // ─────────────────────────────────────────────────────────────────────────
+    // Eliminar un mensaje por índice dentro del chat
+    // ─────────────────────────────────────────────────────────────────────────
     public Chat eliminarMensaje(String chatId, int indexMensaje) {
         Chat chat = repository.findById(chatId)
                 .orElseThrow(() -> new RuntimeException("Chat no encontrado"));
@@ -143,5 +175,4 @@ public class ChatService {
             throw new RuntimeException("Índice de mensaje inválido");
         }
     }
-
 }

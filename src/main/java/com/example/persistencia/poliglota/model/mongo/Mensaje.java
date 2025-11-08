@@ -1,23 +1,30 @@
 package com.example.persistencia.poliglota.model.mongo;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.bson.types.ObjectId;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
- * Modelo de mensaje usado dentro del documento Chat.
+ * Modelo de mensaje usado dentro del documento Chat (embebido).
  * No crea una colección independiente en Mongo.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Mensaje {
 
-    private String remitente;       // Usuario que envía el mensaje
-    private String contenido;       // Texto del mensaje
-    private Instant fechaEnvio;     // Fecha y hora en formato UTC
-    private boolean leido = false;  // Estado de lectura
+    // 👇 ID propio del mensaje (para ubicarlo dentro del array del Chat)
+    private String id = new ObjectId().toHexString();
 
+    private String remitente;      // usuario que envía (email o id)
+    private String contenido;      // texto
+    private Instant fechaEnvio = Instant.now();
+
+    // 👇 En vez de boolean, guardamos los usuarios que lo leyeron
+    @Builder.Default
+    private Set<Long> leidoPor = new HashSet<>();
 }
