@@ -24,5 +24,11 @@ public interface MedicionRepository extends CassandraRepository<Medicion, UUID> 
 
     // Buscar por país en rango de fechas
     List<Medicion> findByPaisAndFechaMedicionBetween(String pais, Date desde, Date hasta);
+
+    @Query("SELECT * FROM mediciones_por_sensor WHERE sensor_id = ?0 ORDER BY fecha_medicion DESC LIMIT 1")
+    Medicion findUltimaBySensor(UUID sensorId);
+
+
+
 }
 

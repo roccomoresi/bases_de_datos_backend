@@ -21,6 +21,7 @@ public interface SensorRepository extends CassandraRepository<Sensor, UUID> {
     @Query("UPDATE sensores SET estado = :estado WHERE id = :id")
     void updateEstado(@Param("id") UUID id, @Param("estado") String estado);
 
+    List<Sensor> findAll();
 
 }
 
