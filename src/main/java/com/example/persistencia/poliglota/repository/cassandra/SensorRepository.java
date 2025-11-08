@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.springframework.data.cassandra.repository.CassandraRepository;
 import org.springframework.data.cassandra.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -18,7 +19,9 @@ public interface SensorRepository extends CassandraRepository<Sensor, UUID> {
     List<Sensor> findByNombre(String nombre);
 
     @Query("UPDATE sensores SET estado = :estado WHERE id = :id")
-    void updateEstado(UUID id, String estado);
+    void updateEstado(@Param("id") UUID id, @Param("estado") String estado);
+
+    List<Sensor> findAll();
 
 }
 

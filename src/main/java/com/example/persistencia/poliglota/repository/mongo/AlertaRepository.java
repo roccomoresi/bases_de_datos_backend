@@ -19,4 +19,9 @@ public interface AlertaRepository extends MongoRepository<Alerta, UUID> {
          + "  { $or: [ { 'pais': ?3 }, { ?3: null } ] }"
          + "] }")
     List<Alerta> filtrarAlertas(String tipo, String severidad, String ciudad, String pais);
+
+
+    boolean existsBySensorIdAndTipoAndEstado(UUID sensorId, String tipo, String estado);
+
+
 }

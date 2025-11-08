@@ -28,7 +28,7 @@ public class MedicionGeneratorService {
     /**
      * 🔄 Genera mediciones automáticas cada 10 segundos con algunas anomalías aleatorias.
      */
-    @Scheduled(fixedRate = 10000)
+    @Scheduled(fixedRateString = "${mediciones.fixed-rate-ms:30000}")
     public void generarMedicionesAutomaticas() {
         List<Sensor> sensores = sensorRepository.findAll();
         if (sensores.isEmpty()) {
