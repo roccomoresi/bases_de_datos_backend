@@ -5,6 +5,10 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import java.util.List;
 
 public interface ChatRepository extends MongoRepository<Chat, String> {
+
+    // Buscar todos los chats donde participe un usuario
     List<Chat> findByParticipantesContaining(String usuarioId);
+
+    // Listar todos los chats ordenados por última actualización (más recientes primero)
     List<Chat> findAllByOrderByUltimaActualizacionDesc();
 }

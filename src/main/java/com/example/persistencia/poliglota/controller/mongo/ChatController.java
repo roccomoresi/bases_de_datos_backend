@@ -41,7 +41,7 @@ public class ChatController {
         return ResponseEntity.ok(service.enviarMensaje(chatId, remitente, contenido));
     }
 
-    // 🗂️ Ver chat
+    // 🗂 Ver chat
     @GetMapping("/{chatId}")
     public ResponseEntity<Chat> obtenerChat(@PathVariable String chatId) {
         return ResponseEntity.ok(service.obtenerChat(chatId));
@@ -59,23 +59,25 @@ public class ChatController {
         return ResponseEntity.ok(service.listarRecientes());
     }
 
-    // 👁️ Marcar mensaje como leído
+    // 👁 Marcar mensaje como leído
     @PutMapping("/{chatId}/mensajes/{index}/leido")
     public ResponseEntity<Chat> marcarLeido(@PathVariable String chatId, @PathVariable int index) {
         return ResponseEntity.ok(service.marcarMensajeComoLeido(chatId, index));
     }
+
     // 🚫 Marcar mensaje como NO leído
     @PutMapping("/{chatId}/mensajes/{index}/noleido")
     public ResponseEntity<Chat> marcarNoLeido(@PathVariable String chatId, @PathVariable int index) {
         return ResponseEntity.ok(service.marcarMensajeComoNoLeido(chatId, index));
     }
 
-    // 📬 Chats recientes resumidos (último mensaje)
+    // 📬 Chats recientes resumidos
     @GetMapping("/recientes/resumen")
     public ResponseEntity<List<Map<String, Object>>> getRecientesResumido() {
-        return ResponseEntity.ok(service.listarRecientesResumido());
+        return ResponseEntity.ok(service.listarRecientesResumen());
     }
-    // 🗑️ Eliminar un chat completo
+
+    // 🗑 Eliminar un chat completo
     @DeleteMapping("/{chatId}")
     public ResponseEntity<?> eliminarChat(@PathVariable String chatId) {
         try {
@@ -86,16 +88,14 @@ public class ChatController {
         }
     }
 
-    // 🗑️ Eliminar un mensaje dentro de un chat
+    // 🗑 Eliminar un mensaje dentro de un chat
     @DeleteMapping("/{chatId}/mensajes/{index}")
     public ResponseEntity<?> eliminarMensaje(@PathVariable String chatId, @PathVariable int index) {
         try {
             service.eliminarMensaje(chatId, index);
-            return ResponseEntity.ok(Map.of("mensaje", "🗑️ Mensaje eliminado correctamente"));
+            return ResponseEntity.ok(Map.of("mensaje", "🗑 Mensaje eliminado correctamente"));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
         }
     }
-
 }
-
