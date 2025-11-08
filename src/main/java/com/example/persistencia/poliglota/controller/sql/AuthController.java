@@ -23,7 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "Auth", description = "Login / Register / Logout")
 @Slf4j
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping ("/api/auth")
+
 public class AuthController {
 
     private final UsuarioService usuarioService;
