@@ -9,23 +9,23 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface HistorialEjecucionRepository extends MongoRepository<HistorialEjecucion, UUID> {
+public interface HistorialEjecucionRepository extends MongoRepository<HistorialEjecucion, String> {
 
-    // 🔹 Buscar por usuario (id SQL)
+    // Buscar por usuario (id SQL)
     List<HistorialEjecucion> findByUsuarioId(Integer usuarioId);
 
-    // 🔹 Buscar por proceso (id Mongo)
+    // Buscar por proceso (id Mongo)
     List<HistorialEjecucion> findByProcesoId(String procesoId);
 
-    // 🔹 Historial más reciente por usuario
+    // Historial más reciente por usuario
     List<HistorialEjecucion> findTop5ByUsuarioIdOrderByFechaFinDesc(Integer usuarioId);
 
-    // 🔹 Historial por usuario y proceso ordenado por fecha
+    // Historial por usuario y proceso ordenado por fecha
     List<HistorialEjecucion> findByUsuarioIdAndProcesoIdOrderByFechaFinDesc(Integer usuarioId, String procesoId);
 
-    // 🔹 Buscar entre fechas (útil para reportes)
+    // Buscar entre fechas (útil para reportes / filtros)
     List<HistorialEjecucion> findByFechaInicioBetween(LocalDateTime desde, LocalDateTime hasta);
 
-    // 🔹 Buscar últimos registros globales
+    // Buscar los últimos 10 registros globales
     List<HistorialEjecucion> findTop10ByOrderByFechaFinDesc();
 }

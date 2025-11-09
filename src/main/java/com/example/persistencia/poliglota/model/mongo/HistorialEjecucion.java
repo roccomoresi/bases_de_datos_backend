@@ -11,7 +11,7 @@ import java.util.UUID;
 public class HistorialEjecucion {
 
     @Id
-    private UUID id;
+    private String id;
 
     private String procesoId;
     private String nombreProceso;
@@ -27,7 +27,7 @@ public class HistorialEjecucion {
        🔹 Constructores
     ─────────────────────────────── */
     public HistorialEjecucion() {
-        this.id = UUID.randomUUID();
+        this.id = UUID.randomUUID().toString();
     }
 
     public HistorialEjecucion(
@@ -38,7 +38,7 @@ public class HistorialEjecucion {
             LocalDateTime fechaFin,
             String resultado
     ) {
-        this.id = UUID.randomUUID();
+        this.id = UUID.randomUUID().toString();
         this.procesoId = procesoId;
         this.nombreProceso = nombreProceso;
         this.usuarioId = usuarioId;
@@ -56,7 +56,7 @@ public class HistorialEjecucion {
     /* ───────────────────────────────
        🔹 Getters y Setters
     ─────────────────────────────── */
-    public UUID getId() { return id; }
+    public String getId() { return id; } // ← corregido: devuelve String
 
     public String getProcesoId() { return procesoId; }
     public void setProcesoId(String procesoId) { this.procesoId = procesoId; }
@@ -75,6 +75,8 @@ public class HistorialEjecucion {
         this.fechaFin = fechaFin;
         if (this.fechaInicio != null && fechaFin != null && !fechaFin.isBefore(this.fechaInicio)) {
             this.duracionSegundos = Duration.between(this.fechaInicio, fechaFin).toSeconds();
+        } else {
+            this.duracionSegundos = null; // ← asegura consistencia
         }
     }
 
@@ -97,10 +99,10 @@ public class HistorialEjecucion {
 
     private String resumenResultado() {
         if (resultado == null) return "sin resultado";
-        if (resultado.toLowerCase().contains("pendiente")) return "pendiente";
-        if (resultado.toLowerCase().contains("curso")) return "en curso";
-        if (resultado.toLowerCase().contains("éxito") || resultado.toLowerCase().contains("completado"))
-            return "completado";
+        String r = resultado.toLowerCase();
+        if (r.contains("pendiente")) return "pendiente";
+        if (r.contains("curso")) return "en curso";
+        if (r.contains("éxito") || r.contains("exito") || r.contains("completado")) return "completado";
         return "otro";
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class HistorialEjecucionService {
@@ -17,61 +18,91 @@ public class HistorialEjecucionService {
         this.repository = repository;
     }
 
-    /* ───────────────────────────────
-       📋 LISTAR HISTORIAL COMPLETO
-    ─────────────────────────────── */
+    // ───────────────────────────────────────────────
+    // LISTAR HISTORIAL COMPLETO
+    // ───────────────────────────────────────────────
     public List<HistorialEjecucion> getAll() {
         return repository.findAll();
     }
 
-    /* ───────────────────────────────
-       🔎 FILTROS DE CONSULTA
-    ─────────────────────────────── */
+    // ───────────────────────────────────────────────
+    // FILTROS DE CONSULTA
+    // ───────────────────────────────────────────────
+
+    // Por usuario
     public List<HistorialEjecucion> getByUsuario(Integer usuarioId) {
         return repository.findByUsuarioId(usuarioId);
     }
 
+    // Por proceso
     public List<HistorialEjecucion> getByProceso(String procesoId) {
         return repository.findByProcesoId(procesoId);
     }
 
-    public List<HistorialEjecucion> getByRangoFechas(LocalDateTime desde, LocalDateTime hasta) {
-        return repository.findAll().stream()
-                .filter(h -> h.getFechaInicio().isAfter(desde) && h.getFechaFin().isBefore(hasta))
-                .toList();
+    // Por usuario + proceso (ordenado por fecha fin desc)
+    public List<HistorialEjecucion> getByUsuarioYProceso(Integer usuarioId, String procesoId) {
+        return repository.findByUsuarioIdAndProcesoIdOrderByFechaFinDesc(usuarioId, procesoId);
     }
 
-    /* ───────────────────────────────
-       💾 REGISTRAR EJECUCIÓN (CON DURACIÓN)
-    ─────────────────────────────── */
+    // Rango de fechas (usa query del repo)
+    public List<HistorialEjecucion> getByRangoFechas(LocalDateTime desde, LocalDateTime hasta) {
+        return repository.findByFechaInicioBetween(desde, hasta);
+    }
+
+    // Top 5 recientes del usuario (para vista rápida)
+    public List<HistorialEjecucion> getTop5ByUsuario(Integer usuarioId) {
+        return repository.findTop5ByUsuarioIdOrderByFechaFinDesc(usuarioId);
+    }
+
+    // Últimos 10 globales (dashboard)
+    public List<HistorialEjecucion> getUltimos10() {
+        return repository.findTop10ByOrderByFechaFinDesc();
+    }
+
+    // Obtener por id (UUID)
+    public HistorialEjecucion getById(String id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Historial no encontrado"));
+    }
+
+    // ───────────────────────────────────────────────
+    // REGISTRAR / ACTUALIZAR EJECUCIÓN (calcula duración)
+    // ───────────────────────────────────────────────
     public HistorialEjecucion save(HistorialEjecucion ejecucion) {
-        if (ejecucion.getFechaInicio() != null && ejecucion.getFechaFin() != null) {
-            long duracion = Duration.between(ejecucion.getFechaInicio(), ejecucion.getFechaFin()).toSeconds();
+        // calcular duración si hay inicio y fin válidos
+        if (ejecucion.getFechaInicio() != null
+                && ejecucion.getFechaFin() != null
+                && !ejecucion.getFechaFin().isBefore(ejecucion.getFechaInicio())) {
+            long duracion = Duration.between(
+                    ejecucion.getFechaInicio(),
+                    ejecucion.getFechaFin()
+            ).toSeconds();
             ejecucion.setDuracionSegundos(duracion);
+        } else {
+            ejecucion.setDuracionSegundos(null);
         }
 
         HistorialEjecucion saved = repository.save(ejecucion);
 
+        // Log en consola
         System.out.printf(
-                "🧾 Historial registrado — Proceso: %s | Usuario: %d | Estado: %s | Duración: %ds%n",
-                ejecucion.getNombreProceso(),
-                ejecucion.getUsuarioId(),
-                resumenEstado(ejecucion.getResultado()),
-                ejecucion.getDuracionSegundos() != null ? ejecucion.getDuracionSegundos() : 0
+                "✔ Historial registrado — Proceso: %s | Usuario: %d | Estado: %s | Duración: %ds%n",
+                saved.getNombreProceso(),
+                saved.getUsuarioId(),
+                resumenEstado(saved.getResultado()),
+                saved.getDuracionSegundos() != null ? saved.getDuracionSegundos() : 0
         );
 
         return saved;
     }
 
-    /* ───────────────────────────────
-       🧠 UTILIDAD: mostrar resumen limpio
-    ─────────────────────────────── */
+    // Utilidad: mostrar estado resumido
     private String resumenEstado(String resultado) {
         if (resultado == null) return "sin resultado";
-        if (resultado.toLowerCase().contains("pendiente")) return "pendiente";
-        if (resultado.toLowerCase().contains("en curso")) return "en curso";
-        if (resultado.toLowerCase().contains("éxito") || resultado.toLowerCase().contains("completado"))
-            return "completado";
+        String r = resultado.toLowerCase();
+        if (r.contains("pendiente")) return "pendiente";
+        if (r.contains("curso"))     return "en curso";
+        if (r.contains("éxito") || r.contains("exito") || r.contains("completado")) return "completado";
         return "otro";
     }
 }
