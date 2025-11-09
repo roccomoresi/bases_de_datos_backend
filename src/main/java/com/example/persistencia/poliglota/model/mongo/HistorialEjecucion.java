@@ -19,13 +19,17 @@ public class HistorialEjecucion {
 
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaFin;
-    private Long duracionSegundos; // puede ser null si no se calcula aún
+    private Long duracionSegundos; // puede ser null si no se calcula
 
     private String resultado;
 
-    /* ───────────────────────────────
-       🔹 Constructores
-    ─────────────────────────────── */
+    // ===== Campos de VALIDACIÓN =====
+    private Boolean validado = false;            // por defecto NO validado
+    private String  validadoPor;                 // quién validó (nombre/usuario)
+    private LocalDateTime fechaValidacion;       // cuándo se validó
+    private String  observacionesValidacion;     // nota opcional
+
+    // ===== Constructores =====
     public HistorialEjecucion() {
         this.id = UUID.randomUUID().toString();
     }
@@ -51,12 +55,11 @@ public class HistorialEjecucion {
         } else {
             this.duracionSegundos = null;
         }
+        this.validado = false;
     }
 
-    /* ───────────────────────────────
-       🔹 Getters y Setters
-    ─────────────────────────────── */
-    public String getId() { return id; } // ← corregido: devuelve String
+    // ===== Getters / Setters =====
+    public String getId() { return id; }
 
     public String getProcesoId() { return procesoId; }
     public void setProcesoId(String procesoId) { this.procesoId = procesoId; }
@@ -75,8 +78,6 @@ public class HistorialEjecucion {
         this.fechaFin = fechaFin;
         if (this.fechaInicio != null && fechaFin != null && !fechaFin.isBefore(this.fechaInicio)) {
             this.duracionSegundos = Duration.between(this.fechaInicio, fechaFin).toSeconds();
-        } else {
-            this.duracionSegundos = null; // ← asegura consistencia
         }
     }
 
@@ -86,23 +87,36 @@ public class HistorialEjecucion {
     public String getResultado() { return resultado; }
     public void setResultado(String resultado) { this.resultado = resultado; }
 
-    /* ───────────────────────────────
-       🔹 Para depuración en logs
-    ─────────────────────────────── */
+    // --- validación
+    public Boolean getValidado() { return validado; }
+    public void setValidado(Boolean validado) { this.validado = validado; }
+
+    public String getValidadoPor() { return validadoPor; }
+    public void setValidadoPor(String validadoPor) { this.validadoPor = validadoPor; }
+
+    public LocalDateTime getFechaValidacion() { return fechaValidacion; }
+    public void setFechaValidacion(LocalDateTime fechaValidacion) { this.fechaValidacion = fechaValidacion; }
+
+    public String getObservacionesValidacion() { return observacionesValidacion; }
+    public void setObservacionesValidacion(String observacionesValidacion) { this.observacionesValidacion = observacionesValidacion; }
+
+    // ===== Logs =====
     @Override
     public String toString() {
         return String.format(
-                "HistorialEjecucion{id=%s, proceso='%s', usuario=%d, estado='%s', duracion=%ds}",
-                id, nombreProceso, usuarioId, resumenResultado(), duracionSegundos != null ? duracionSegundos : 0
+                "HistorialEjecucion{id=%s, proceso='%s', usuario=%d, estado='%s', duracion=%ds, validado=%s}",
+                id, nombreProceso, usuarioId, resumenResultado(),
+                duracionSegundos != null ? duracionSegundos : 0,
+                Boolean.TRUE.equals(validado)
         );
     }
 
     private String resumenResultado() {
         if (resultado == null) return "sin resultado";
-        String r = resultado.toLowerCase();
-        if (r.contains("pendiente")) return "pendiente";
-        if (r.contains("curso")) return "en curso";
-        if (r.contains("éxito") || r.contains("exito") || r.contains("completado")) return "completado";
+        if (resultado.toLowerCase().contains("pendiente")) return "pendiente";
+        if (resultado.toLowerCase().contains("curso")) return "en curso";
+        if (resultado.toLowerCase().contains("éxito") || resultado.toLowerCase().contains("completado"))
+            return "completado";
         return "otro";
     }
 }

@@ -6,26 +6,19 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Repository
 public interface HistorialEjecucionRepository extends MongoRepository<HistorialEjecucion, String> {
 
-    // Buscar por usuario (id SQL)
+    // filtros existentes
     List<HistorialEjecucion> findByUsuarioId(Integer usuarioId);
-
-    // Buscar por proceso (id Mongo)
     List<HistorialEjecucion> findByProcesoId(String procesoId);
-
-    // Historial más reciente por usuario
     List<HistorialEjecucion> findTop5ByUsuarioIdOrderByFechaFinDesc(Integer usuarioId);
-
-    // Historial por usuario y proceso ordenado por fecha
     List<HistorialEjecucion> findByUsuarioIdAndProcesoIdOrderByFechaFinDesc(Integer usuarioId, String procesoId);
-
-    // Buscar entre fechas (útil para reportes / filtros)
     List<HistorialEjecucion> findByFechaInicioBetween(LocalDateTime desde, LocalDateTime hasta);
-
-    // Buscar los últimos 10 registros globales
     List<HistorialEjecucion> findTop10ByOrderByFechaFinDesc();
+
+    // ===== Soporte de VALIDACIÓN =====
+    List<HistorialEjecucion> findByValidadoFalseOrderByFechaFinDesc();
+    List<HistorialEjecucion> findByValidadoTrueOrderByFechaValidacionDesc();
 }
