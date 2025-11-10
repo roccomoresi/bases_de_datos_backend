@@ -68,7 +68,7 @@ public class HistorialEjecucionService {
         return repository.save(ejecucion);
     }
 
-    // ===== VALIDACIÓN =====
+    // ===== VALIDACIÓN (existente) =====
     public List<HistorialEjecucion> getPendientesValidacion() {
         return repository.findByValidadoFalseOrderByFechaFinDesc();
     }
@@ -93,5 +93,14 @@ public class HistorialEjecucionService {
         h.setFechaValidacion(null);
         h.setObservacionesValidacion(null);
         return repository.save(h);
+    }
+
+    // ===== *NUEVO*: Sólo validados (para el usuario final) =====
+    public List<HistorialEjecucion> getValidadosByUsuario(Integer usuarioId) {
+        return repository.findByUsuarioIdAndValidadoTrueOrderByFechaFinDesc(usuarioId);
+    }
+
+    public List<HistorialEjecucion> getValidadosByUsuarioYProceso(Integer usuarioId, String procesoId) {
+        return repository.findByUsuarioIdAndProcesoIdAndValidadoTrueOrderByFechaFinDesc(usuarioId, procesoId);
     }
 }

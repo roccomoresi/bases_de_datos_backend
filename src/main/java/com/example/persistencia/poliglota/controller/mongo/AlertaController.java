@@ -13,7 +13,7 @@ import java.util.*;
  * Permite crear, listar, resolver y buscar alertas activas o por ubicación.
  */
 @RestController
-@RequestMapping("/api/mongo/alertas")
+@RequestMapping("/api/mongo/alertas")// para evitar problemas de CORS al conectar con el front
 public class AlertaController {
 
     private final AlertaService service;
@@ -39,15 +39,8 @@ public class AlertaController {
     }
 
     // -----------------------------------------------------------------------
-    // 🔵 LISTAR SOLO LAS ALERTAS RESUELTAS
-    // -----------------------------------------------------------------------
-    @GetMapping("/resueltas")
-    public ResponseEntity<List<Alerta>> getResueltas() {
-        return ResponseEntity.ok(service.listarResueltas());
-    }
-
-    // -----------------------------------------------------------------------
     // 🌍 BUSCAR ALERTAS POR CIUDAD Y PAÍS
+    // Ejemplo: /api/mongo/alertas/ubicacion?ciudad=Rosario&pais=Argentina
     // -----------------------------------------------------------------------
     @GetMapping("/ubicacion")
     public ResponseEntity<List<Alerta>> getPorUbicacion(
@@ -55,16 +48,21 @@ public class AlertaController {
             @RequestParam String pais
     ) {
         List<Alerta> alertas = service.buscarPorUbicacion(ciudad, pais);
-        if (alertas.isEmpty()) return ResponseEntity.noContent().build();
+        if (alertas.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
         return ResponseEntity.ok(alertas);
     }
 
     // -----------------------------------------------------------------------
     // 🚨 CREAR ALERTA MANUAL O POR BACKEND
+    // Recibe un JSON con los campos:
+    // tipo, descripcion, ciudad, pais, sensorId (opcional), detalles (map)
     // -----------------------------------------------------------------------
     @PostMapping
-    public ResponseEntity<?> crear(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<Alerta> crear(@RequestBody Map<String, Object> body) {
         try {
+            // Extraemos los datos del body
             String tipo = (String) body.getOrDefault("tipo", "climatica");
             String descripcion = (String) body.getOrDefault("descripcion", "Alerta generada");
             String ciudad = (String) body.getOrDefault("ciudad", "Desconocida");
@@ -74,56 +72,63 @@ public class AlertaController {
                     : null;
             Map<String, Object> detalles = (Map<String, Object>) body.getOrDefault("detalles", Map.of());
 
+            // Creamos la alerta
             Alerta alerta = service.crearConDetalles(sensorId, tipo, descripcion, ciudad, pais, detalles);
             return ResponseEntity.status(HttpStatus.CREATED).body(alerta);
+
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Error al crear la alerta", "detalle", e.getMessage()));
+            Map<String, Object> error = Map.of(
+                    "error", "Error al crear la alerta",
+                    "detalle", e.getMessage()
+            );
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }
 
-    // -----------------------------------------------------------------------
-    // 👷‍♂️ ASIGNAR TÉCNICO MANUALMENTE
-    // -----------------------------------------------------------------------
+
     @PutMapping("/{id}/asignar-manual")
-    public ResponseEntity<?> asignarTecnicoManual(
-            @PathVariable UUID id,
-            @RequestParam Integer tecnicoId,
-            @RequestParam String nombreTecnico
-    ) {
-        try {
-            Alerta alertaActualizada = service.asignarTecnico(id, tecnicoId, nombreTecnico);
-            return ResponseEntity.ok(Map.of(
-                    "mensaje", "Técnico asignado manualmente",
-                    "tecnicoAsignado", nombreTecnico,
-                    "alerta", alertaActualizada
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al asignar técnico manualmente", "detalle", e.getMessage()));
-        }
+public ResponseEntity<?> asignarTecnicoManual(
+        @PathVariable UUID id,
+        @RequestParam Integer tecnicoId,
+        @RequestParam String nombreTecnico
+) {
+    try {
+        Alerta alertaActualizada = service.asignarTecnico(id, tecnicoId, nombreTecnico);
+        return ResponseEntity.ok(Map.of(
+                "mensaje", "Técnico asignado manualmente",
+                "tecnicoAsignado", nombreTecnico,
+                "alerta", alertaActualizada
+        ));
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Error al asignar técnico manualmente", "detalle", e.getMessage()));
     }
+}
 
     // -----------------------------------------------------------------------
     // 🧩 RESOLVER ALERTA POR ID
+    // Cambia el estado a "resuelta"
     // -----------------------------------------------------------------------
     @PutMapping("/{id}/resolver")
-    public ResponseEntity<?> resolver(@PathVariable UUID id) {
+    public ResponseEntity<Alerta> resolver(@PathVariable UUID id) {
         try {
             Alerta alerta = service.resolver(id);
             return ResponseEntity.ok(alerta);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "No se pudo resolver la alerta", "detalle", e.getMessage()));
+            Map<String, Object> error = Map.of(
+                    "error", "No se pudo resolver la alerta",
+                    "detalle", e.getMessage()
+            );
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
 
     // -----------------------------------------------------------------------
-    // 🗑️ ELIMINAR ALERTA POR ID
+    // 🗑️ ELIMINAR ALERTA POR ID (solo para mantenimiento)
     // -----------------------------------------------------------------------
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminar(@PathVariable UUID id) {
+    public ResponseEntity<Map<String, String>> eliminar(@PathVariable UUID id) {
         try {
             service.eliminar(id);
             return ResponseEntity.ok(Map.of("mensaje", "Alerta eliminada correctamente"));
@@ -134,116 +139,150 @@ public class AlertaController {
     }
 
     // -----------------------------------------------------------------------
-    // 🎯 FILTRAR ALERTAS DINÁMICAMENTE
-    // -----------------------------------------------------------------------
-    @GetMapping("/filtrar")
-    public ResponseEntity<List<Alerta>> filtrarAlertas(
-            @RequestParam(required = false) String tipo,
-            @RequestParam(required = false) String severidad,
-            @RequestParam(required = false) String estado,
-            @RequestParam(required = false) String ciudad,
-            @RequestParam(required = false) String pais,
-            @RequestParam(required = false) UUID sensorId
-    ) {
-        List<Alerta> alertas = service.filtrarAlertas(tipo, severidad, estado, ciudad, pais, sensorId);
-        if (alertas.isEmpty()) return ResponseEntity.noContent().build();
-        return ResponseEntity.ok(alertas);
+// 🎯 FILTRAR ALERTAS DINÁMICAMENTE
+// Ejemplo:
+// /api/mongo/alertas/filtrar?tipo=climatica&severidad=critica&ciudad=Rosario&pais=Argentina
+// Todos los parámetros son opcionales.
+// -----------------------------------------------------------------------
+@GetMapping("/filtrar")
+public ResponseEntity<List<Alerta>> filtrarAlertas(
+        @RequestParam(required = false) String tipo,
+        @RequestParam(required = false) String severidad,
+        @RequestParam(required = false) String ciudad,
+        @RequestParam(required = false) String pais
+) {
+    List<Alerta> alertas = service.filtrar(tipo, severidad, ciudad, pais);
+    if (alertas.isEmpty()) {
+        return ResponseEntity.noContent().build();
     }
+    return ResponseEntity.ok(alertas);
+}
 
-    // -----------------------------------------------------------------------
-    // 🌐 ALERTAS GLOBALES (Mongo + Cassandra)
-    // -----------------------------------------------------------------------
-    @GetMapping("/global")
-    public ResponseEntity<?> getAlertasGlobales() {
-        try {
-            List<Map<String, Object>> resultado = new ArrayList<>();
-            List<Alerta> alertas = service.listar();
+// -----------------------------------------------------------------------
+// 🌐 ALERTAS GLOBALES (Mongo + Cassandra)
+// Combina las alertas de Mongo con la última medición de Cassandra
+// -----------------------------------------------------------------------
+@GetMapping("/global")
+public ResponseEntity<List<Map<String, Object>>> getAlertasGlobales() {
+    List<Map<String, Object>> resultado = new ArrayList<>();
 
-            for (Alerta alerta : alertas) {
-                Map<String, Object> item = new LinkedHashMap<>();
-                item.put("sensorId", alerta.getSensorId());
-                item.put("ciudad", alerta.getCiudad());
-                item.put("pais", alerta.getPais());
-                item.put("descripcion", alerta.getDescripcion());
-                item.put("severidad", alerta.getSeveridad());
-                item.put("fechaAlerta", alerta.getFecha());
-                item.put("fuente", alerta.getFuente());
-                item.put("estado", alerta.getEstado());
+    try {
+        // ✅ Obtenemos todas las alertas
+        List<Alerta> alertas = service.listar();
 
-                try {
-                    var restTemplate = new org.springframework.web.client.RestTemplate();
-                    var url = "http://localhost:8080/api/cassandra/mediciones/sensor/" + alerta.getSensorId();
-                    var response = restTemplate.getForEntity(url, List.class);
+        for (Alerta alerta : alertas) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("sensorId", alerta.getSensorId());
+            item.put("ciudad", alerta.getCiudad());
+            item.put("pais", alerta.getPais());
+            item.put("descripcion", alerta.getDescripcion());
+            item.put("severidad", alerta.getSeveridad());
+            item.put("fechaAlerta", alerta.getFecha());
+            item.put("fuente", alerta.getFuente());
+            item.put("estado", alerta.getEstado());
 
-                    if (response.getStatusCode().is2xxSuccessful()
-                            && response.getBody() != null
-                            && !response.getBody().isEmpty()) {
-                        List<?> mediciones = response.getBody();
-                        item.put("ultimaMedicion", mediciones.get(mediciones.size() - 1));
-                    } else {
-                        item.put("ultimaMedicion", "No disponible");
-                    }
-                } catch (Exception e) {
-                    item.put("ultimaMedicion", "No disponible");
+            // ⚙️ Consultamos Cassandra (vía HTTP) para obtener la última medición del sensor
+            try {
+                var restTemplate = new org.springframework.web.client.RestTemplate();
+                var url = "http://localhost:8080/api/cassandra/mediciones/sensor/" + alerta.getSensorId();
+                var response = restTemplate.getForEntity(url, List.class);
+
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && !response.getBody().isEmpty()) {
+                    // Tomamos la última medición
+                    List<?> mediciones = response.getBody();
+                    item.put("ultimaMedicion", mediciones.get(mediciones.size() - 1));
                 }
-
-                resultado.add(item);
+            } catch (Exception e) {
+                item.put("ultimaMedicion", "No disponible");
             }
 
-            return ResponseEntity.ok(resultado);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "No se pudieron combinar las alertas con las mediciones", "detalle", e.getMessage()));
+            resultado.add(item);
         }
-    }
 
-    // -----------------------------------------------------------------------
-    // 🤖 ASIGNAR AUTOMÁTICAMENTE UN TÉCNICO (SQL)
-    // -----------------------------------------------------------------------
-    @PutMapping("/{id}/asignar-auto")
-    public ResponseEntity<?> asignarTecnicoAutomatico(@PathVariable UUID id) {
-        try {
-            var restTemplate = new org.springframework.web.client.RestTemplate();
-            var response = restTemplate.getForEntity(
-                    "http://localhost:8080/api/sql/usuarios/tecnicos", List.class
-            );
+        return ResponseEntity.ok(resultado);
 
-            if (!response.getStatusCode().is2xxSuccessful()
-                    || response.getBody() == null
-                    || response.getBody().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "No se encontraron técnicos disponibles"));
-            }
-
-            List<Map<String, Object>> listaTecnicos = (List<Map<String, Object>>) response.getBody();
-            Random random = new Random();
-            Map<String, Object> tecnicoMap = listaTecnicos.get(random.nextInt(listaTecnicos.size()));
-
-            Object rawId = tecnicoMap.get("idUsuario");
-            Integer tecnicoId = rawId instanceof Integer ? (Integer) rawId :
-                    rawId instanceof Long ? ((Long) rawId).intValue() :
-                    rawId instanceof String ? Integer.parseInt((String) rawId) : null;
-
-            String nombreTecnico = String.valueOf(tecnicoMap.get("nombreCompleto"));
-            if (tecnicoId == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(Map.of("error", "No se pudo determinar el ID del técnico"));
-            }
-
-            Alerta alertaActualizada = service.asignarTecnico(id, tecnicoId, nombreTecnico);
-
-            System.out.printf("👷 Asignado automáticamente el técnico %s (ID=%d) a la alerta %s%n",
-                    nombreTecnico, tecnicoId, id);
-
-            return ResponseEntity.ok(Map.of(
-                    "mensaje", "Alerta asignada automáticamente al técnico",
-                    "tecnicoAsignado", nombreTecnico,
-                    "alerta", alertaActualizada
-            ));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al asignar técnico automáticamente", "detalle", e.getMessage()));
-        }
+    } catch (Exception e) {
+        Map<String, Object> error = Map.of(
+                "error", "No se pudieron combinar las alertas con las mediciones",
+                "detalle", e.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(List.of(error));
     }
 }
+@GetMapping("/resueltas")
+public ResponseEntity<List<Alerta>> getResueltas() {
+    return ResponseEntity.ok(service.listarResueltas());
+}
+
+// -----------------------------------------------------------------------
+// 🤖 ASIGNAR AUTOMÁTICAMENTE UNA ALERTA A UN TÉCNICO DISPONIBLE (desde SQL)
+// Ejemplo: PUT /api/mongo/alertas/{id}/asignar-auto
+// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// 🤖 ASIGNAR AUTOMÁTICAMENTE UNA ALERTA A UN TÉCNICO DISPONIBLE (desde SQL)
+// Ejemplo: PUT /api/mongo/alertas/{id}/asignar-auto
+// -----------------------------------------------------------------------
+@PutMapping("/{id}/asignar-auto")
+public ResponseEntity<?> asignarTecnicoAutomatico(@PathVariable UUID id) {
+    try {
+        var restTemplate = new org.springframework.web.client.RestTemplate();
+
+        // 🔹 Consultamos técnicos desde el módulo SQL
+        var response = restTemplate.getForEntity(
+            "http://localhost:8080/api/sql/usuarios/tecnicos", List.class
+        );
+
+        if (!response.getStatusCode().is2xxSuccessful() ||
+            response.getBody() == null || response.getBody().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No se encontraron técnicos disponibles"));
+        }
+
+        // 🎲 Selecciona un técnico aleatorio de la lista
+        List<Map<String, Object>> listaTecnicos = (List<Map<String, Object>>) response.getBody();
+        Random random = new Random();
+        Map<String, Object> tecnicoMap = listaTecnicos.get(random.nextInt(listaTecnicos.size()));
+
+        // ✅ Convertir el ID correctamente sin importar el tipo
+        Object rawId = tecnicoMap.get("idUsuario");
+        Integer tecnicoId = rawId instanceof Integer ? (Integer) rawId :
+                rawId instanceof Long ? ((Long) rawId).intValue() :
+                rawId instanceof String ? Integer.parseInt((String) rawId) : null;
+
+        // ✅ Nombre técnico (seguro como String)
+        String nombreTecnico = String.valueOf(tecnicoMap.get("nombreCompleto"));
+
+        if (tecnicoId == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "No se pudo determinar el ID del técnico"));
+        }
+
+        // 🧩 Asignar técnico en Mongo
+        Alerta alertaActualizada = service.asignarTecnico(id, tecnicoId, nombreTecnico);
+
+        // 🧠 Log bonito para trazabilidad
+        System.out.printf(
+            "👷 Asignado automáticamente el técnico %s (ID=%d) a la alerta %s%n",
+            nombreTecnico, tecnicoId, id
+        );
+
+        return ResponseEntity.ok(Map.of(
+                "mensaje", "Alerta asignada automáticamente al técnico",
+                "tecnicoAsignado", nombreTecnico,
+                "alerta", alertaActualizada
+        ));
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Error al asignar técnico automáticamente", "detalle", e.getMessage()));
+    }
+}
+
+
+}
+
+
+
+
