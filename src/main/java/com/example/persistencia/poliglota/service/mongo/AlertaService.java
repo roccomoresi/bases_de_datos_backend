@@ -3,13 +3,9 @@ package com.example.persistencia.poliglota.service.mongo;
 import com.example.persistencia.poliglota.model.mongo.Alerta;
 import com.example.persistencia.poliglota.repository.cassandra.SensorRepository;
 import com.example.persistencia.poliglota.repository.mongo.AlertaRepository;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -19,44 +15,13 @@ public class AlertaService {
 
     private final AlertaRepository repository;
     private final SensorRepository sensorRepository;
-    private final MongoTemplate mongoTemplate;
 
-    public AlertaService(AlertaRepository repository,
-                         SensorRepository sensorRepository,
-                         MongoTemplate mongoTemplate) {
-        this.repository = repository;
-        this.sensorRepository = sensorRepository;
-        this.mongoTemplate = mongoTemplate;
-    }
+public AlertaService(AlertaRepository repository, SensorRepository sensorRepository) {
+    this.repository = repository;
+    this.sensorRepository = sensorRepository;
+}
 
-    // ---------------------------------------------------------------------
-    // 🔎 FILTRO DINÁMICO REAL EN MONGO
-    // ---------------------------------------------------------------------
-    public List<Alerta> filtrarAlertas(String tipo, String severidad, String estado,
-                                       String ciudad, String pais, UUID sensorId) {
-
-        Query query = new Query();
-        List<Criteria> criterios = new ArrayList<>();
-
-        if (tipo != null && !tipo.isBlank()) criterios.add(Criteria.where("tipo").is(tipo));
-        if (severidad != null && !severidad.isBlank()) criterios.add(Criteria.where("severidad").is(severidad));
-        if (estado != null && !estado.isBlank()) criterios.add(Criteria.where("estado").is(estado));
-        if (ciudad != null && !ciudad.isBlank()) criterios.add(Criteria.where("ciudad").is(ciudad));
-        if (pais != null && !pais.isBlank()) criterios.add(Criteria.where("pais").is(pais));
-        if (sensorId != null) criterios.add(Criteria.where("sensorId").is(sensorId));
-
-        if (!criterios.isEmpty())
-            query.addCriteria(new Criteria().andOperator(criterios.toArray(new Criteria[0])));
-
-        // 🔽 Ordenamos las alertas por fecha descendente (más recientes primero)
-        query.with(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "fecha"));
-
-        return mongoTemplate.find(query, Alerta.class);
-    }
-
-    // ---------------------------------------------------------------------
     // 🌡️ CREACIÓN SIMPLE
-    // ---------------------------------------------------------------------
     public Alerta crear(UUID sensorId, String tipo, String descripcion, String ciudad, String pais) {
         return crearConDetalles(sensorId, tipo, descripcion, ciudad, pais, Map.of("fuente", "cassandra"));
     }
@@ -116,21 +81,20 @@ public class AlertaService {
         };
     }
 
-    // ---------------------------------------------------------------------
-    // 👷 ASIGNACIÓN DE TÉCNICO
-    // ---------------------------------------------------------------------
-    public Alerta asignarTecnico(UUID id, Integer tecnicoId, String nombreTecnico) {
-        Alerta alerta = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No se encontró la alerta con ID " + id));
+public Alerta asignarTecnico(UUID id, Integer tecnicoId, String nombreTecnico) {
+    Alerta alerta = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("No se encontró la alerta con ID " + id));
 
-        alerta.setTecnicoAsignado(tecnicoId);
-        alerta.setNombreTecnico(nombreTecnico);
-        alerta.setFechaAsignacion(Instant.now());
-        alerta.getDetalles().put("asignado_por", "admin");
-        alerta.getDetalles().put("asignado_en", Instant.now().toString());
+    alerta.setTecnicoAsignado(tecnicoId);
+    alerta.setNombreTecnico(nombreTecnico);
+    alerta.setFechaAsignacion(Instant.now());
+    alerta.getDetalles().put("asignado_por", "admin");
+    alerta.getDetalles().put("asignado_en", Instant.now().toString());
 
-        return repository.save(alerta);
-    }
+    return repository.save(alerta);
+}
+
+
 
     // ---------------------------------------------------------------------
     // 🔍 OPERACIONES BÁSICAS
@@ -143,29 +107,26 @@ public class AlertaService {
         return repository.findByEstado("activa");
     }
 
-    public List<Alerta> listarResueltas() {
-        return repository.findByEstado("resuelta");
-    }
-
     public Alerta resolver(UUID id) {
-        Alerta alerta = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No se encontró la alerta con ID " + id));
+    Alerta alerta = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("No se encontró la alerta con ID " + id));
 
-        alerta.setEstado("resuelta");
-        alerta.getDetalles().put("fecha_resolucion", Instant.now().toString());
-        alerta.getDetalles().put("resuelta_por", "admin");
+    alerta.setEstado("resuelta");
+    alerta.getDetalles().put("fecha_resolucion", Instant.now().toString());
+    alerta.getDetalles().put("resuelta_por", "admin");
 
-        // ✅ Si está asociada a un sensor, lo reactivamos en Cassandra
-        if (alerta.getSensorId() != null) {
-            try {
-                sensorRepository.updateEstado(alerta.getSensorId(), "activo");
-            } catch (Exception e) {
-                alerta.getDetalles().put("warning", "No se pudo reactivar el sensor: " + e.getMessage());
-            }
+    // ✅ Si está asociada a un sensor, lo reactivamos en Cassandra
+    if (alerta.getSensorId() != null) {
+        try {
+            sensorRepository.updateEstado(alerta.getSensorId(), "activo");
+        } catch (Exception e) {
+            alerta.getDetalles().put("warning", "No se pudo reactivar el sensor: " + e.getMessage());
         }
-
-        return repository.save(alerta);
     }
+
+    return repository.save(alerta);
+}
+
 
     public List<Alerta> buscarPorUbicacion(String ciudad, String pais) {
         return repository.findByCiudadAndPais(ciudad, pais);
@@ -198,4 +159,29 @@ public class AlertaService {
         repository.deleteAll(demo);
         return demo.size();
     }
+
+    // ---------------------------------------------------------------------
+    // 🔎 FILTRO FLEXIBLE
+    // ---------------------------------------------------------------------
+    public List<Alerta> filtrar(String tipo, String severidad, String ciudad, String pais) {
+        // Si usás la versión con @Query en el repo:
+        // return repository.filtrarAlertas(tipo, severidad, ciudad, pais);
+
+        // 🔹 Si preferís hacerlo en memoria (seguro y funciona ya mismo):
+        List<Alerta> todas = repository.findAll();
+
+        return todas.stream()
+                .filter(a -> tipo == null || a.getTipo().equalsIgnoreCase(tipo))
+                .filter(a -> severidad == null || a.getSeveridad().equalsIgnoreCase(severidad))
+                .filter(a -> ciudad == null ||
+                        (a.getCiudad() != null && a.getCiudad().equalsIgnoreCase(ciudad)))
+                .filter(a -> pais == null ||
+                        (a.getPais() != null && a.getPais().equalsIgnoreCase(pais)))
+                .toList();
+    }
+
+    public List<Alerta> listarResueltas() {
+        return repository.findByEstado("resuelta");
+    }
+    
 }
