@@ -83,24 +83,19 @@ public class HistorialEjecucionController {
     }
 
     // ============================================================
-    // VALIDACIÓN DE RESULTADOS (💡 Tarea nueva)
+    // VALIDACIÓN (moderación interna)
     // ============================================================
 
-    // 🔹 Listar todos los que todavía no fueron validados
     @GetMapping("/pendientes-validacion")
     public ResponseEntity<List<HistorialEjecucion>> getPendientesValidacion() {
         return ResponseEntity.ok(service.getPendientesValidacion());
     }
 
-    // 🔹 Listar todos los validados
     @GetMapping("/validados")
     public ResponseEntity<List<HistorialEjecucion>> getValidados() {
         return ResponseEntity.ok(service.getValidados());
     }
 
-    // 🔹 Validar un resultado (por ID)
-    // Ejemplo en Swagger:
-    // PUT /api/mongo/historial/{id}/validar?validador=Facu&observaciones=Revisado
     @PutMapping("/{id}/validar")
     public ResponseEntity<HistorialEjecucion> validar(
             @PathVariable String id,
@@ -110,10 +105,27 @@ public class HistorialEjecucionController {
         return ResponseEntity.ok(service.validar(id, validador, observaciones));
     }
 
-    // 🔹 Revertir validación
-    // Ejemplo: PUT /api/mongo/historial/{id}/desvalidar
     @PutMapping("/{id}/desvalidar")
     public ResponseEntity<HistorialEjecucion> desvalidar(@PathVariable String id) {
         return ResponseEntity.ok(service.desvalidar(id));
+    }
+
+    // ============================================================
+    // *NUEVO*: ENDPOINTS “SOLO VALIDADOS” (para el usuario final)
+    // ============================================================
+
+    // Lista solo validados del usuario
+    @GetMapping("/usuario/{usuarioId}/validados")
+    public ResponseEntity<List<HistorialEjecucion>> getValidadosByUsuario(@PathVariable Integer usuarioId) {
+        return ResponseEntity.ok(service.getValidadosByUsuario(usuarioId));
+    }
+
+    // Lista solo validados del usuario filtrando por proceso
+    @GetMapping("/usuario/{usuarioId}/proceso/{procesoId}/validados")
+    public ResponseEntity<List<HistorialEjecucion>> getValidadosByUsuarioYProceso(
+            @PathVariable Integer usuarioId,
+            @PathVariable String procesoId
+    ) {
+        return ResponseEntity.ok(service.getValidadosByUsuarioYProceso(usuarioId, procesoId));
     }
 }

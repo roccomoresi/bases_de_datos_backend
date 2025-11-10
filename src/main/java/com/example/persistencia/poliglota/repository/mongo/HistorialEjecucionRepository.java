@@ -10,7 +10,7 @@ import java.util.List;
 @Repository
 public interface HistorialEjecucionRepository extends MongoRepository<HistorialEjecucion, String> {
 
-    // filtros existentes
+    // Filtros existentes
     List<HistorialEjecucion> findByUsuarioId(Integer usuarioId);
     List<HistorialEjecucion> findByProcesoId(String procesoId);
     List<HistorialEjecucion> findTop5ByUsuarioIdOrderByFechaFinDesc(Integer usuarioId);
@@ -18,7 +18,11 @@ public interface HistorialEjecucionRepository extends MongoRepository<HistorialE
     List<HistorialEjecucion> findByFechaInicioBetween(LocalDateTime desde, LocalDateTime hasta);
     List<HistorialEjecucion> findTop10ByOrderByFechaFinDesc();
 
-    // ===== Soporte de VALIDACIÓN =====
+    // Validación global
     List<HistorialEjecucion> findByValidadoFalseOrderByFechaFinDesc();
     List<HistorialEjecucion> findByValidadoTrueOrderByFechaValidacionDesc();
+
+    // *NUEVO*: sólo validados por usuario / usuario+proceso
+    List<HistorialEjecucion> findByUsuarioIdAndValidadoTrueOrderByFechaFinDesc(Integer usuarioId);
+    List<HistorialEjecucion> findByUsuarioIdAndProcesoIdAndValidadoTrueOrderByFechaFinDesc(Integer usuarioId, String procesoId);
 }
