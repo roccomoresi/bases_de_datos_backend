@@ -1,6 +1,7 @@
 package com.example.persistencia.poliglota.controller.mongo;
 
-import com.example.persistencia.poliglota.model.mongo.HistorialEjecucion;
+import com.example.persistencia.poliglota.dto.ProcesoMapper;
+import com.example.persistencia.poliglota.dto.ProcesoResponse;
 import com.example.persistencia.poliglota.model.mongo.Proceso;
 import com.example.persistencia.poliglota.service.mongo.ProcesoService;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +19,6 @@ public class ProcesoController {
         this.service = service;
     }
 
-    // =========================================================
-    // V1 - Endpoints estándar (sin mapper)
-    // =========================================================
-
-    // LISTAR / BUSCAR
     @GetMapping
     public ResponseEntity<List<Proceso>> getAll() {
         return ResponseEntity.ok(service.getAll());
@@ -35,6 +31,7 @@ public class ProcesoController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Proceso> getById(@PathVariable String id) {
+        // El service lanza 404 si no existe, así que devolvemos 200 directo si llega
         return ResponseEntity.ok(service.obtenerPorId(id));
     }
 
@@ -43,7 +40,6 @@ public class ProcesoController {
         return ResponseEntity.ok(service.getByTipo(tipo));
     }
 
-    // CREAR / ACTUALIZAR / ELIMINAR
     @PostMapping
     public ResponseEntity<Proceso> save(@RequestBody Proceso proceso) {
         return ResponseEntity.ok(service.save(proceso));
@@ -61,27 +57,37 @@ public class ProcesoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable String id) {
-        service.delete(id);
+        service.delete(id); // lanza 404 si no existe
         return ResponseEntity.noContent().build();
     }
 
-    // =========================================================
-    // NUEVO: EJECUCIONES (manual y automática)
-    // =========================================================
 
-    // Ejecuta automáticamente (por ejemplo al pagar)
-    @PostMapping("/{id}/auto")
-    public ResponseEntity<Void> ejecutarAuto(@PathVariable String id) {
-        service.ejecutarProceso(id);
-        return ResponseEntity.ok().build();
+    //=======================================================   
+
+
+    // ---------- v2 (DTO limpio) ----------
+    @PostMapping("/v2")
+    public ResponseEntity<ProcesoResponse> saveV2(@RequestBody Proceso proceso) {
+        Proceso saved = service.save(proceso);
+        return ResponseEntity.ok(ProcesoMapper.toResponse(saved));
     }
 
-    // Ejecuta manualmente (desde Swagger o interfaz)
-    @PostMapping("/{id}/ejecutar")
-    public ResponseEntity<HistorialEjecucion> ejecutarManual(
-            @PathVariable String id,
-            @RequestParam Integer usuarioId
-    ) {
-        return ResponseEntity.ok(service.ejecutarManual(id, usuarioId));
+    @GetMapping("/v2")
+    public ResponseEntity<List<ProcesoResponse>> getAllV2() {
+        List<ProcesoResponse> out = service.getAll()
+            .stream().map(ProcesoMapper::toResponse).toList();
+        return ResponseEntity.ok(out);
+    }
+
+    @GetMapping("/v2/{id}")
+    public ResponseEntity<ProcesoResponse> getByIdV2(@PathVariable String id) {
+        return ResponseEntity.ok(ProcesoMapper.toResponse(service.obtenerPorId(id)));
+    }
+
+    @GetMapping("/v2/tipo/{tipo}")
+    public ResponseEntity<List<ProcesoResponse>> getByTipoV2(@PathVariable String tipo) {
+        List<ProcesoResponse> out = service.getByTipo(tipo)
+            .stream().map(ProcesoMapper::toResponse).toList();
+        return ResponseEntity.ok(out);
     }
 }
