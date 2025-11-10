@@ -128,4 +128,32 @@ public ResponseEntity<List<SensorDTO>> buscarSensores(
     return ResponseEntity.ok(filtrados);
 }
 
+// ✅ Obtener lista de países (sin repetir)
+@GetMapping("/paises")
+public ResponseEntity<List<String>> obtenerPaises() {
+    List<String> paises = sensorService.getAll().stream()
+            .map(Sensor::getPais)
+            .filter(Objects::nonNull)
+            .distinct()
+            .sorted()
+            .collect(Collectors.toList());
+
+    return ResponseEntity.ok(paises);
+}
+
+// ✅ Obtener ciudades según país seleccionado
+@GetMapping("/ciudades")
+public ResponseEntity<List<String>> obtenerCiudadesPorPais(@RequestParam String pais) {
+    List<String> ciudades = sensorService.getAll().stream()
+            .filter(s -> pais.equalsIgnoreCase(s.getPais()))
+            .map(Sensor::getCiudad)
+            .filter(Objects::nonNull)
+            .distinct()
+            .sorted()
+            .collect(Collectors.toList());
+
+    return ResponseEntity.ok(ciudades);
+}
+
+
 }
